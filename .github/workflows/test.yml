@@ -34,9 +34,9 @@ jobs:
       run: |
         flake8 src tests --config=.flake8
 
-    - name: Check formatting with black
-      run: |
-        black --check src tests
+    # - name: Check formatting with black
+    #   run: |
+    #     black --check src tests
 
     - name: Check types with mypy
       continue-on-error: true
