@@ -137,7 +137,10 @@ class CLI:
                 if os.path.isdir(os.path.join(prods_dir, d))
             ]
         except Exception as e:
-            self.logger.error(f"Failed to list productions: {e}")
+            if self.logger:
+                self.logger.error(f"Failed to list productions: {e}")
+            else:
+                print(f"Failed to list productions: {e}")
 
         # Print productions
         if prods:

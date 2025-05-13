@@ -288,6 +288,11 @@ class ProductionEnvironment:
         if "PROD" not in env_vars:
             env_vars["PROD"] = self.prod_name
             
+        # Add PROD_ROOT if not explicitly set
+        if "PROD_ROOT" not in env_vars:
+            # Default PROD_ROOT is /s/prods/{PROD_NAME}
+            env_vars["PROD_ROOT"] = f"/s/prods/{self.prod_name}"
+            
         # Set the variables
         self.env_manager.set_environment_variables(env_vars)
         

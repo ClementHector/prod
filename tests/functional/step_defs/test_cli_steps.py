@@ -5,7 +5,8 @@ Step definitions pour les tests fonctionnels de l'interface en ligne de commande
 import contextlib
 import os
 import tempfile
-from unittest import mock
+from io import StringIO
+import unittest.mock as mock
 
 import pytest
 from pytest_bdd import given, parsers, scenarios, then, when

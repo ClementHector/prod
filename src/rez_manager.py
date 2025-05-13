@@ -4,11 +4,13 @@ Rez package manager integration for the Prod CLI tool.
 import os
 import platform
 import subprocess
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, cast
 
 from src.error_handler import RezError
 from src.logger import Logger
 
+# Define Windows-specific flags
+WINDOWS_CREATE_NEW_PROCESS_GROUP = 0x00000200  # Value from win32process.CREATE_NEW_PROCESS_GROUP
 
 class RezManager:
     """
@@ -194,17 +196,25 @@ class RezManager:
                 # Run in background
                 if self.system == "Windows":
                     # For Windows, use CREATE_NEW_PROCESS_GROUP flag instead of shell=True
-                    from subprocess import CREATE_NEW_PROCESS_GROUP
+                    # Import only on Windows to avoid errors on other platforms
+                    try:
+                        from subprocess import CREATE_NEW_PROCESS_GROUP
+                        creationflags_value = CREATE_NEW_PROCESS_GROUP
+                    except ImportError:
+                        # Fallback for older Python versions or non-Windows platforms
+                        # Value from win32process.CREATE_NEW_PROCESS_GROUP
+                        creationflags_value = WINDOWS_CREATE_NEW_PROCESS_GROUP
                     
                     # Create a single command string for Windows cmd
-                    cmd_str = " ".join(["start", "/b"] + [str(arg) for arg in rez_command])
+                    cmd_parts = ["start", "/b"] + [str(arg) for arg in rez_command]
+                    cmd_str = " ".join(cmd_parts)
                     
                     # Use subprocess.Popen with CREATE_NEW_PROCESS_GROUP flag
                     subprocess.Popen(
                         cmd_str,
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
-                        creationflags=CREATE_NEW_PROCESS_GROUP,
+                        creationflags=creationflags_value,
                         shell=False
                     )
                     return 0, "", ""
@@ -214,7 +224,7 @@ class RezManager:
                         rez_command,
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
-                        preexec_fn=os.setpgrp
+                        preexec_fn=os.setsid if hasattr(os, 'setsid') else None
                     )
                     return 0, "", ""
             else:
