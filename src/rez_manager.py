@@ -193,12 +193,19 @@ class RezManager:
             if background:
                 # Run in background
                 if self.system == "Windows":
-                    # For Windows, use start command
+                    # For Windows, use CREATE_NEW_PROCESS_GROUP flag instead of shell=True
+                    from subprocess import CREATE_NEW_PROCESS_GROUP
+                    
+                    # Create a single command string for Windows cmd
+                    cmd_str = " ".join(["start", "/b"] + [str(arg) for arg in rez_command])
+                    
+                    # Use subprocess.Popen with CREATE_NEW_PROCESS_GROUP flag
                     subprocess.Popen(
-                        ["start", "/b"] + rez_command,
+                        cmd_str,
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
-                        shell=True
+                        creationflags=CREATE_NEW_PROCESS_GROUP,
+                        shell=False
                     )
                     return 0, "", ""
                 else:

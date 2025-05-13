@@ -3,7 +3,7 @@ Production environment management for the Prod CLI tool.
 """
 import ast
 import os
-from typing import Dict, List, Optional, Any, cast
+from typing import Dict, List, Optional, cast
 
 from src.config_manager import ConfigManager
 from src.environment_manager import EnvironmentManager
@@ -374,8 +374,13 @@ class ProductionEnvironment:
                 
         return software_list
     
-    def execute_software(self, software_name: str, additional_packages: Optional[List[str]] = None,
-                        env_only: bool = False, background: bool = False) -> None:
+    def execute_software(
+        self, 
+        software_name: str, 
+        additional_packages: Optional[List[str]] = None,
+        env_only: bool = False, 
+        background: bool = False
+    ) -> None:
         """
         Executes a software application.
         
