@@ -4,13 +4,15 @@ Rez package manager integration for the Prod CLI tool.
 import os
 import platform
 import subprocess
-from typing import Dict, List, Optional, Tuple, cast
+from typing import Dict, List, Optional, Tuple
 
 from src.error_handler import RezError
 from src.logger import Logger
 
 # Define Windows-specific flags
-WINDOWS_CREATE_NEW_PROCESS_GROUP = 0x00000200  # Value from win32process.CREATE_NEW_PROCESS_GROUP
+# Value from win32process.CREATE_NEW_PROCESS_GROUP
+WINDOWS_CREATE_NEW_PROCESS_GROUP = 0x00000200
+
 
 class RezManager:
     """
@@ -197,13 +199,15 @@ class RezManager:
                 if self.system == "Windows":
                     # For Windows, use CREATE_NEW_PROCESS_GROUP flag instead of shell=True
                     # Import only on Windows to avoid errors on other platforms
-                    try:
-                        from subprocess import CREATE_NEW_PROCESS_GROUP
-                        creationflags_value = CREATE_NEW_PROCESS_GROUP
-                    except ImportError:
-                        # Fallback for older Python versions or non-Windows platforms
-                        # Value from win32process.CREATE_NEW_PROCESS_GROUP
-                        creationflags_value = WINDOWS_CREATE_NEW_PROCESS_GROUP
+                    creationflags_value = 0
+                    if platform.system() == "Windows":
+                        try:
+                            # Windows-only import
+                            from subprocess import CREATE_NEW_PROCESS_GROUP
+                            creationflags_value = CREATE_NEW_PROCESS_GROUP
+                        except ImportError:
+                            # Fallback for older Python versions
+                            creationflags_value = WINDOWS_CREATE_NEW_PROCESS_GROUP
                     
                     # Create a single command string for Windows cmd
                     cmd_parts = ["start", "/b"] + [str(arg) for arg in rez_command]

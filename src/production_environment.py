@@ -293,6 +293,11 @@ class ProductionEnvironment:
             # Default PROD_ROOT is /s/prods/{PROD_NAME}
             env_vars["PROD_ROOT"] = f"/s/prods/{self.prod_name}"
             
+        # Add PROD_TYPE if not explicitly set
+        if "PROD_TYPE" not in env_vars:
+            # Default PROD_TYPE is vfx
+            env_vars["PROD_TYPE"] = "vfx"
+            
         # Set the variables
         self.env_manager.set_environment_variables(env_vars)
         

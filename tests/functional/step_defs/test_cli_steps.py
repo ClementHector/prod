@@ -107,8 +107,8 @@ def run_command(cli_context, command):
     if cmd == "prod":
         # Exécuter une commande prod
         with (
-            mock.patch("sys.stdout", new=mock.StringIO()) as mock_stdout,
-            mock.patch("sys.stderr", new=mock.StringIO()) as mock_stderr,
+            mock.patch("sys.stdout", new=StringIO()) as mock_stdout,
+            mock.patch("sys.stderr", new=StringIO()) as mock_stderr,
         ):
 
             # Ajouter les mocks nécessaires
@@ -133,8 +133,8 @@ def run_command(cli_context, command):
     elif cmd in ["maya", "nuke", "houdini"]:
         # Exécuter une commande de logiciel
         with (
-            mock.patch("sys.stdout", new=mock.StringIO()) as mock_stdout,
-            mock.patch("sys.stderr", new=mock.StringIO()) as mock_stderr,
+            mock.patch("sys.stdout", new=StringIO()) as mock_stdout,
+            mock.patch("sys.stderr", new=StringIO()) as mock_stderr,
         ):
 
             with (
