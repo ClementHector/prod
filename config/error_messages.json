@@ -1,0 +1,14 @@
+{
+    "ConfigError": {
+        "message": "Configuration error: {error}",
+        "solution": "Check your configuration files for syntax errors or missing values. Make sure the production exists and has valid configuration files."
+    },
+    "RezError": {
+        "message": "Rez error: {error}",
+        "solution": "Make sure Rez is installed and properly configured. Check that the required packages are available in your Rez repository."
+    },
+    "FileNotFoundError": {
+        "message": "File not found: {error}",
+        "solution": "Check that the file exists and that you have permission to access it. If it's a configuration file, make sure it's in the correct location."
+    }
+} 
