@@ -3,7 +3,7 @@ Production environment management for the Prod CLI tool.
 """
 import ast
 import os
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any, cast
 
 from src.config_manager import ConfigManager
 from src.environment_manager import EnvironmentManager
@@ -70,7 +70,7 @@ class SoftwareConfig:
             packages_str = self.config_manager.get_merged_config(
                 software_name, "packages", "[]"
             )
-            return ast.literal_eval(packages_str)
+            return cast(List[str], ast.literal_eval(packages_str))
         except (KeyError, SyntaxError, ValueError) as e:
             if self.logger:
                 self.logger.warning(
@@ -118,7 +118,7 @@ class PipelineConfig:
             packages_str = self.config_manager.get_merged_config(
                 "common", "packages", "[]"
             )
-            return ast.literal_eval(packages_str)
+            return cast(List[str], ast.literal_eval(packages_str))
         except (KeyError, SyntaxError, ValueError) as e:
             if self.logger:
                 self.logger.warning(f"Error parsing common packages: {e}")
@@ -139,7 +139,7 @@ class PipelineConfig:
                 packages_str = self.config_manager.get_merged_config(
                     software_name, "packages", "[]"
                 )
-                return ast.literal_eval(packages_str)
+                return cast(List[str], ast.literal_eval(packages_str))
             return []
         except (KeyError, SyntaxError, ValueError) as e:
             if self.logger:
@@ -374,7 +374,7 @@ class ProductionEnvironment:
                 
         return software_list
     
-    def execute_software(self, software_name: str, additional_packages: List[str] = None,
+    def execute_software(self, software_name: str, additional_packages: Optional[List[str]] = None,
                         env_only: bool = False, background: bool = False) -> None:
         """
         Executes a software application.

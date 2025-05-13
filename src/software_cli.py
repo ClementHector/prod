@@ -4,7 +4,7 @@ Command line interface for software commands in the Prod CLI tool.
 import argparse
 import os
 import sys
-from typing import List, Optional
+from typing import List, Optional, Callable
 
 from src.error_handler import ConfigError, ErrorHandler, RezError
 from src.logger import Logger
@@ -24,8 +24,8 @@ class SoftwareCLI:
         """
         self.software_name = software_name
         self.parser = self._setup_argument_parser()
-        self.logger = None
-        self.error_handler = None
+        self.logger: Optional[Logger] = None
+        self.error_handler: Optional[ErrorHandler] = None
     
     def _setup_argument_parser(self) -> argparse.ArgumentParser:
         """
@@ -107,7 +107,7 @@ class SoftwareCLI:
             return 1
 
 
-def create_software_entry_point(software_name: str) -> callable:
+def create_software_entry_point(software_name: str) -> Callable[[], int]:
     """
     Creates an entry point function for a software.
     

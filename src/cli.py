@@ -105,7 +105,10 @@ class CLI:
                 return 0
 
         except (ConfigError, RezError, Exception) as e:
-            self.error_handler.handle_error(e)
+            if self.error_handler:
+                self.error_handler.handle_error(e)
+            else:
+                print(f"Error: {e}")
             return 1
 
     def _handle_list_command(self, args: argparse.Namespace) -> int:
@@ -177,7 +180,10 @@ class CLI:
             return 0
 
         except Exception as e:
-            self.error_handler.handle_error(e)
+            if self.error_handler:
+                self.error_handler.handle_error(e)
+            else:
+                print(f"Error: {e}")
             return 1
 
 

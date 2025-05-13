@@ -135,7 +135,7 @@ class RezManager:
             )
             
             # Parse the output
-            packages = {}
+            packages: Dict[str, List[str]] = {}
             for line in result.stdout.splitlines():
                 if line.strip():
                     parts = line.strip().split()
