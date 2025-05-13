@@ -11,7 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.9]
+        python-version: [3.9, 3.10, 3.11, 3.12]
+      fail-fast: false
 
     steps:
     - uses: actions/checkout@v3
@@ -27,14 +28,25 @@ jobs:
         pip install -e ".[dev,test]"
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
+        pip install mypy bandit
 
     - name: Lint with flake8
       run: |
-        flake8 src tests
+        flake8 src tests --config=.flake8
 
     - name: Check formatting with black
       run: |
         black --check src tests
+
+    - name: Check types with mypy
+      continue-on-error: true
+      run: |
+        mypy src
+
+    - name: Security check with bandit
+      continue-on-error: true
+      run: |
+        bandit -r src -ll
 
     - name: Run unit tests
       run: |

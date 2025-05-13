@@ -1,0 +1,6 @@
+[bandit]
+exclude = /tests,/venv,/.git,/__pycache__,/build,/dist
+skips = B101,B104
+
+[bandit.assert_used]
+skips = */test_*.py

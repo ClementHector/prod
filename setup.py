@@ -21,7 +21,7 @@ setup(
         ],
     },
     extras_require={
-        'dev': ['black', 'isort', 'flake8'],
+        'dev': ['black', 'isort', 'flake8', 'mypy', 'bandit'],
         'test': ['pytest', 'pytest-cov', 'pytest-bdd'],
     },
     classifiers=[

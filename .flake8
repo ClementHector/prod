@@ -1,0 +1,14 @@
+[flake8]
+max-line-length = 90
+exclude = .git,__pycache__,build,dist
+ignore =
+    # Ignorer les lignes vides avec des espaces
+    W293,
+    # Ignorer les espaces en fin de ligne
+    W291,
+    # Ignorer les lignes sans nouvelle ligne à la fin
+    W292,
+    # Ignorer les problèmes d'indentation pour les lignes continuées
+    E128,
+    # Tolérer les f-strings sans placeholders
+    F541

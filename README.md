@@ -264,6 +264,36 @@ To add support for a new software:
 
 This tool is maintained by Technical Directors and Supervisors. Please contact the development team for any issues or feature requests.
 
+## Code Quality
+
+This project uses several tools to ensure code quality and security:
+
+- **flake8**: For code style and syntax checking
+- **black**: For automatic code formatting
+- **isort**: For import sorting
+- **mypy**: For static type checking
+- **bandit**: For security vulnerability scanning
+- **pytest**: For unit and functional testing with BDD
+
+To run these tools locally:
+
+```bash
+# Code style and formatting
+flake8 src tests --config=.flake8
+black src tests
+isort src tests
+
+# Type checking
+mypy src
+
+# Security scanning
+bandit -r src -ll
+
+# Tests
+pytest tests/unittest -v  # Unit tests
+pytest tests/functional -v  # BDD tests
+```
+
 ## License
 
 [Add your license information here]
