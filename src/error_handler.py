@@ -34,15 +34,18 @@ class ErrorHandler:
         default_messages = {
             "FileNotFoundError": {
                 "message": "The specified file was not found: {error}",
-                "solution": "Check if the file exists and if you have permission to access it."
+                "solution": "Check if the file exists and if you have permission "
+                           "to access it."
             },
             "PermissionError": {
                 "message": "You don't have permission to access this file: {error}",
-                "solution": "Check your file permissions or run the command with elevated privileges."
+                "solution": "Check your file permissions or run the command "
+                           "with elevated privileges."
             },
             "ConfigError": {
                 "message": "Configuration error: {error}",
-                "solution": "Check your configuration files for syntax errors or missing values."
+                "solution": "Check your configuration files for syntax errors "
+                           "or missing values."
             },
             "RezError": {
                 "message": "Rez error: {error}",
@@ -59,7 +62,9 @@ class ErrorHandler:
         }
         
         # Try to load custom error messages
-        error_messages_path = os.path.join(os.path.dirname(__file__), '../config/error_messages.json')
+        error_messages_path = os.path.join(
+            os.path.dirname(__file__), '../config/error_messages.json'
+        )
         if os.path.exists(error_messages_path):
             try:
                 with open(error_messages_path, 'r') as f:

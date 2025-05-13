@@ -43,7 +43,8 @@ class ConfigManager:
     def merge_configs(self, configs: List[str]) -> None:
         """
         Merges multiple configuration files.
-        Configurations are processed from left to right, with later files overriding earlier ones.
+        Configurations are processed from left to right, 
+        with later files overriding earlier ones.
 
         Args:
             configs: List of paths to configuration files

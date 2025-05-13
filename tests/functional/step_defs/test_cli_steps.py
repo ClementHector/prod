@@ -4,16 +4,13 @@ Step definitions pour les tests fonctionnels de l'interface en ligne de commande
 
 import contextlib
 import os
-import subprocess
 import tempfile
-from io import StringIO
 from unittest import mock
 
 import pytest
 from pytest_bdd import given, parsers, scenarios, then, when
 
-from src.cli import CLI, main
-from src.production_environment import ProductionEnvironment
+from src.cli import CLI
 from src.software_cli import SoftwareCLI
 
 # Importer tous les scénarios du fichier feature

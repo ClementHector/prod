@@ -34,11 +34,23 @@ class SoftwareCLI:
         Returns:
             Configured argument parser
         """
-        parser = argparse.ArgumentParser(description=f'{self.software_name} launcher with Prod')
+        parser = argparse.ArgumentParser(
+            description=f'{self.software_name} launcher with Prod'
+        )
         
-        parser.add_argument('--packages', nargs='+', help='Additional packages to include')
-        parser.add_argument('--env-only', action='store_true', help='Enter environment only without launching')
-        parser.add_argument('--verbose', '-v', action='store_true', help='Verbose output')
+        parser.add_argument(
+            '--packages', nargs='+', help='Additional packages to include'
+        )
+        parser.add_argument(
+            '--env-only', 
+            action='store_true', 
+            help='Enter environment only without launching'
+        )
+        parser.add_argument(
+            '--verbose', '-v', 
+            action='store_true', 
+            help='Verbose output'
+        )
         
         return parser
     
@@ -62,7 +74,9 @@ class SoftwareCLI:
         prod_name = os.environ.get('PROD')
         
         if not prod_name:
-            print("Error: No production environment is active. Please enter a production first with 'prod enter <production>'.")
+            error_msg = "Error: No production environment is active. "
+            error_msg += "Please enter a production first with 'prod enter <production>'."
+            print(error_msg)
             return 1
             
         # Initialize logger
@@ -79,7 +93,12 @@ class SoftwareCLI:
             additional_packages = parsed_args.packages or []
             env_only = parsed_args.env_only
             
-            env.execute_software(self.software_name, additional_packages, env_only, False)
+            env.execute_software(
+                self.software_name, 
+                additional_packages, 
+                env_only, 
+                False
+            )
             
             return 0
             

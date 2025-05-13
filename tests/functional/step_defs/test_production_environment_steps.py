@@ -9,11 +9,8 @@ from unittest import mock
 import pytest
 from pytest_bdd import given, parsers, scenarios, then, when
 
-from src.config_manager import ConfigManager
-from src.environment_manager import EnvironmentManager
 from src.logger import Logger
 from src.production_environment import ProductionEnvironment
-from src.rez_manager import RezManager
 
 # Importer tous les scénarios du fichier feature
 scenarios("../features/production_environment.feature")
@@ -147,19 +144,17 @@ DLT_SHOTS=/s/prods/dlt/shots
         )
 
     # Créer le fichier de paramètres prod
+    temp_dir = prod_env_context["temp_dir"].name
     with open(os.path.join(config_dir, "prod-settings.ini"), "w") as f:
         f.write(
             """
 [environment]
-SOFTWARE_CONFIG=%s/config/studio/software.ini:%s/config/prods/{PROD_NAME}/config/software.ini
-PIPELINE_CONFIG=%s/config/studio/pipeline.ini:%s/config/prods/{PROD_NAME}/config/pipeline.ini
+SOFTWARE_CONFIG=%s/config/studio/software.ini:
+%s/config/prods/{PROD_NAME}/config/software.ini
+PIPELINE_CONFIG=%s/config/studio/pipeline.ini:
+%s/config/prods/{PROD_NAME}/config/pipeline.ini
 """
-            % (
-                prod_env_context["temp_dir"].name,
-                prod_env_context["temp_dir"].name,
-                prod_env_context["temp_dir"].name,
-                prod_env_context["temp_dir"].name,
-            )
+            % (temp_dir, temp_dir, temp_dir, temp_dir)
         )
 
     # Sauvegarder les chemins dans le contexte
@@ -230,7 +225,10 @@ def activate_production_env(prod_env_context):
 
 @then("environment variables should be set from the pipeline configuration")
 def check_env_variables(prod_env_context):
-    """Vérifier que les variables d'environnement sont définies à partir de la configuration."""
+    """
+    Vérifier que les variables d'environnement sont définies
+    à partir de la configuration.
+    """
     assert "PROD_ROOT" in prod_env_context["env_variables"]
     assert "PROD_TYPE" in prod_env_context["env_variables"]
     assert "DLT_ASSETS" in prod_env_context["env_variables"]
@@ -242,12 +240,12 @@ def check_env_variables(prod_env_context):
 
 @then("the PROD environment variable should be set to the production name")
 def check_prod_env_var(prod_env_context):
-    """Vérifier que la variable d'environnement PROD est définie avec le nom de production."""
+    """
+    Vérifier que la variable d'environnement PROD est définie
+    avec le nom de production.
+    """
     assert "PROD" in prod_env_context["env_variables"]
-    assert (
-        prod_env_context["env_variables"]["PROD"]
-        == prod_env_context["prod_name"]
-    )
+    assert prod_env_context["env_variables"]["PROD"] == prod_env_context["prod_name"]
 
 
 @then("Rez aliases should be created for all configured software")
@@ -268,24 +266,25 @@ def check_alias_packages(prod_env_context):
     for alias in prod_env_context["rez_aliases"]:
         if alias["software"] == "maya":
             assert "vfxCore-2.5" in alias["packages"]  # Common package
-            assert (
-                "vfxMayaTools-2.3" in alias["packages"]
-            )  # Maya-specific package
+            assert ("vfxMayaTools-2.3" in
+                    alias["packages"])  # Maya-specific package
             assert "mtoa-2.3" in alias["packages"]  # Plugin
             assert "golaem-4" in alias["packages"]  # Plugin
 
         elif alias["software"] == "nuke":
             assert "vfxCore-2.5" in alias["packages"]  # Common package
-            assert (
-                "vfxNukeTools-2.1" in alias["packages"]
-            )  # Nuke-specific package
+            assert ("vfxNukeTools-2.1" in
+                    alias["packages"])  # Nuke-specific package
             assert "ofxSuperResolution" in alias["packages"]  # Plugin
             assert "neatVideo" in alias["packages"]  # Plugin
 
 
 @then("I should get a list of all configured software with their versions")
 def check_software_list(prod_env_context):
-    """Vérifier que la liste des logiciels configurés avec leurs versions est correcte."""
+    """
+    Vérifier que la liste des logiciels configurés avec leurs versions 
+    est correcte.
+    """
     with (
         prod_env_context["mock_load_config_paths"],
         prod_env_context["mock_validate_rez"],
@@ -293,14 +292,17 @@ def check_software_list(prod_env_context):
 
         if "prod_env" not in prod_env_context:
             prod_env = ProductionEnvironment(
-                prod_env_context["prod_name"], prod_env_context["logger"]
+                prod_env_context["prod_name"], 
+                prod_env_context["logger"]
             )
             prod_env_context["prod_env"] = prod_env
 
         software_list = prod_env_context["prod_env"].get_software_list()
 
         # Vérifier que tous les logiciels sont dans la liste
-        software_dict = {sw["name"]: sw["version"] for sw in software_list}
+        software_dict = {
+            sw["name"]: sw["version"] for sw in software_list
+        }
         assert "maya" in software_dict
         assert "nuke" in software_dict
         assert "nuke-13" in software_dict

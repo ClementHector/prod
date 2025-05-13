@@ -9,9 +9,12 @@ from typing import Optional
 
 class Logger:
     """
-    Handles logging functionality with support for multiple verbosity levels and log rotation.
+    Handles logging functionality with support for multiple verbosity levels
+    and log rotation.
     """
-    def __init__(self, log_level: str = 'INFO', log_file: Optional[str] = None):
+    def __init__(
+        self, log_level: str = 'INFO', log_file: Optional[str] = None
+    ):
         """
         Initializes the logger with the specified log level and file.
         
@@ -42,7 +45,9 @@ class Logger:
         logger.setLevel(getattr(logging, log_level))
         
         # Create formatter
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        )
         
         # Create console handler
         console_handler = logging.StreamHandler()

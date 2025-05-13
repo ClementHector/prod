@@ -2,7 +2,6 @@
 Production environment management for the Prod CLI tool.
 """
 import ast
-import json
 import os
 from typing import Dict, List, Optional
 
@@ -47,7 +46,9 @@ class SoftwareConfig:
         try:
             return self.config_manager.get_merged_config(software_name, "version")
         except KeyError:
-            raise ConfigError(f"Version for software '{software_name}' is not configured")
+            raise ConfigError(
+                f"Version for software '{software_name}' is not configured"
+            )
     
     def get_required_packages(self, software_name: str) -> List[str]:
         """
@@ -66,11 +67,15 @@ class SoftwareConfig:
             raise ConfigError(f"Software '{software_name}' is not configured")
             
         try:
-            packages_str = self.config_manager.get_merged_config(software_name, "packages", "[]")
+            packages_str = self.config_manager.get_merged_config(
+                software_name, "packages", "[]"
+            )
             return ast.literal_eval(packages_str)
         except (KeyError, SyntaxError, ValueError) as e:
             if self.logger:
-                self.logger.warning(f"Error parsing packages for {software_name}: {e}")
+                self.logger.warning(
+                    f"Error parsing packages for {software_name}: {e}"
+                )
             return []
     
     def get_configured_software(self) -> List[str]:
@@ -80,7 +85,8 @@ class SoftwareConfig:
         Returns:
             List of software names
         """
-        # Filter sections that correspond to software (excluding 'common', 'environment', etc.)
+        # Filter sections that correspond to software 
+        # (excluding 'common', 'environment', etc.)
         excluded_sections = ["common", "environment"]
         return [section for section in self.config_manager.get_sections() 
                 if section not in excluded_sections]
@@ -109,7 +115,9 @@ class PipelineConfig:
             List of common packages
         """
         try:
-            packages_str = self.config_manager.get_merged_config("common", "packages", "[]")
+            packages_str = self.config_manager.get_merged_config(
+                "common", "packages", "[]"
+            )
             return ast.literal_eval(packages_str)
         except (KeyError, SyntaxError, ValueError) as e:
             if self.logger:
@@ -128,7 +136,9 @@ class PipelineConfig:
         """
         try:
             if self.config_manager.has_section(software_name):
-                packages_str = self.config_manager.get_merged_config(software_name, "packages", "[]")
+                packages_str = self.config_manager.get_merged_config(
+                    software_name, "packages", "[]"
+                )
                 return ast.literal_eval(packages_str)
             return []
         except (KeyError, SyntaxError, ValueError) as e:
@@ -177,7 +187,9 @@ class ProductionEnvironment:
             Dictionary of configuration paths
         """
         # Load from prod-settings.ini
-        settings_path = os.path.join(os.path.dirname(__file__), '../config/prod-settings.ini')
+        settings_path = os.path.join(
+            os.path.dirname(__file__), '../config/prod-settings.ini'
+        )
         
         if not os.path.exists(settings_path):
             raise ConfigError(f"Prod settings file not found: {settings_path}")
@@ -190,16 +202,28 @@ class ProductionEnvironment:
             raise ConfigError(f"Missing 'environment' section in prod settings file")
             
         # Replace {PROD_NAME} with actual production name
-        software_config_path = settings.get_merged_config("environment", "SOFTWARE_CONFIG", "")
-        pipeline_config_path = settings.get_merged_config("environment", "PIPELINE_CONFIG", "")
+        software_config_path = settings.get_merged_config(
+            "environment", "SOFTWARE_CONFIG", ""
+        )
+        pipeline_config_path = settings.get_merged_config(
+            "environment", "PIPELINE_CONFIG", ""
+        )
         
-        software_config_path = software_config_path.replace("{PROD_NAME}", self.prod_name)
-        pipeline_config_path = pipeline_config_path.replace("{PROD_NAME}", self.prod_name)
+        software_config_path = software_config_path.replace(
+            "{PROD_NAME}", self.prod_name
+        )
+        pipeline_config_path = pipeline_config_path.replace(
+            "{PROD_NAME}", self.prod_name
+        )
         
         # Split paths by separator (: or ; depending on OS)
         separator = ";" if os.name == "nt" else ":"
-        software_config_paths = software_config_path.split(separator) if software_config_path else []
-        pipeline_config_paths = pipeline_config_path.split(separator) if pipeline_config_path else []
+        software_config_paths = (
+            software_config_path.split(separator) if software_config_path else []
+        )
+        pipeline_config_paths = (
+            pipeline_config_path.split(separator) if pipeline_config_path else []
+        )
         
         return {
             "software": software_config_paths,
@@ -263,12 +287,18 @@ class ProductionEnvironment:
         # Add PROD environment variable if not explicitly set
         if "PROD" not in env_vars:
             env_vars["PROD"] = self.prod_name
-        
-        # Set environment variables
+            
+        # Set the variables
         self.env_manager.set_environment_variables(env_vars)
         
         if self.logger:
-            self.logger.info(f"Set environment variables for production '{self.prod_name}'")
+            self.logger.info(
+                f"Set environment variables for production '{self.prod_name}'"
+            )
+            self.logger.debug(
+                f"Environment variables: "
+                f"{', '.join(f'{k}={v}' for k, v in env_vars.items())}"
+            )
     
     def _create_rez_aliases(self) -> None:
         """

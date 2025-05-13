@@ -41,7 +41,10 @@ class RezManager:
                 check=True
             )
         except (subprocess.SubprocessError, FileNotFoundError):
-            raise RezError("Rez is not installed or not in PATH. Please install Rez or add it to your PATH.")
+            raise RezError(
+                "Rez is not installed or not in PATH. "
+                "Please install Rez or add it to your PATH."
+            )
     
     def create_alias(self, software_name: str, software_version: str, 
                     packages: List[str], alias_name: Optional[str] = None) -> str:
@@ -64,7 +67,9 @@ class RezManager:
             alias_name = software_name
             
         # Generate the Rez command
-        rez_command = self._generate_rez_command(software_name, software_version, packages)
+        rez_command = self._generate_rez_command(
+            software_name, software_version, packages
+        )
         
         # Create the alias
         try:
@@ -76,7 +81,10 @@ class RezManager:
             )
             
             if self.logger:
-                self.logger.info(f"Created Rez alias '{alias_name}' for {software_name}-{software_version}")
+                self.logger.info(
+                    f"Created Rez alias '{alias_name}' for "
+                    f"{software_name}-{software_version}"
+                )
                 
             return alias_name
             
@@ -85,7 +93,9 @@ class RezManager:
                 self.logger.error(f"Failed to create Rez alias: {e}")
             raise RezError(f"Failed to create Rez alias: {e}")
     
-    def _generate_rez_command(self, software_name: str, software_version: str, packages: List[str]) -> str:
+    def _generate_rez_command(
+        self, software_name: str, software_version: str, packages: List[str]
+    ) -> str:
         """
         Generates a Rez command for a software with packages.
         
@@ -104,7 +114,7 @@ class RezManager:
         package_list.extend(packages)
         
         # Format the command
-        command = "rez env " + " ".join(package_list) + " -- " + software_name
+        command = f"rez env {' '.join(package_list)} -- {software_name}"
         
         return command
     

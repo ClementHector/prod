@@ -6,7 +6,7 @@ import os
 import tempfile
 
 import pytest
-from pytest_bdd import given, parsers, scenarios, then, when
+from pytest_bdd import given, scenarios, then, when
 
 from src.config_manager import ConfigManager
 
@@ -103,7 +103,10 @@ def check_merged_sections(config_context):
 
 @then("production-specific values should override studio-wide values")
 def check_override_values(config_context):
-    """Vérifier que les valeurs spécifiques à la production remplacent les valeurs studio."""
+    """
+    Vérifier que les valeurs spécifiques à la production 
+    remplacent les valeurs studio.
+    """
     # Maya version should be from prod config
     maya_version = config_context["config_manager"].get_merged_config(
         "maya", "version"

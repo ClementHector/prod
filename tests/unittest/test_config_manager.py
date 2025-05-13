@@ -82,10 +82,7 @@ def test_merge_configs(config_setup):
 
     # Check that the override value was applied
     assert config_manager.get_merged_config("section1", "key1") == "value1"
-    assert (
-        config_manager.get_merged_config("section1", "key2")
-        == "override_value"
-    )
+    assert config_manager.get_merged_config("section1", "key2") == "override_value"
     assert config_manager.get_merged_config("section3", "key1") == "new_value"
 
 
@@ -98,10 +95,7 @@ def test_load_override_config(config_setup):
 
     # Check that the override was applied
     assert config_manager.get_merged_config("section1", "key1") == "value1"
-    assert (
-        config_manager.get_merged_config("section1", "key2")
-        == "override_value"
-    )
+    assert config_manager.get_merged_config("section1", "key2") == "override_value"
     assert config_manager.get_merged_config("section3", "key1") == "new_value"
 
 
