@@ -32,36 +32,26 @@ jobs:
         pip install mypy bandit
 
     - name: Lint with flake8
-      continue-on-error: true
       run: |
         flake8 src tests --config=.flake8
 
-    # - name: Check formatting with black
-    #   run: |
-    #     black --check src tests
-
     - name: Check types with mypy
-      continue-on-error: true
       run: |
         mypy src
 
     - name: Security check with bandit
-      continue-on-error: true
       run: |
         bandit -r src -ll
 
     - name: Run unit tests
-      continue-on-error: true
       run: |
         pytest tests/unittest -v --cov=src
 
     - name: Run functional tests
-      continue-on-error: true
       run: |
         pytest tests/functional -v --cov=src --cov-append
 
     - name: Generate coverage report
-      continue-on-error: true
       run: |
         pytest --cov-report=xml
 
