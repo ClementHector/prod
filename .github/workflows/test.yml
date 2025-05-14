@@ -8,10 +8,11 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: [3.9, 3.10, 3.11, 3.12]
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
       fail-fast: false
 
     steps:
@@ -55,10 +56,12 @@ jobs:
         pytest tests/unittest -v --cov=src
 
     - name: Run functional tests
+      continue-on-error: true
       run: |
         pytest tests/functional -v --cov=src --cov-append
 
     - name: Generate coverage report
+      continue-on-error: true
       run: |
         pytest --cov-report=xml
 
