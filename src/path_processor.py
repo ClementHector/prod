@@ -33,15 +33,13 @@ class PathProcessor:
         i = 0
         while i < len(temp_path) - 2:
             # Check if current position is a Windows drive letter (e.g., C:\)
-            is_drive_letter = (
-                temp_path[i].isalpha()
-                and temp_path[i + 1] == ":"
-                and (temp_path[i + 2] == "\\" or temp_path[i + 2] == "/")
-            )
+            is_alpha = temp_path[i].isalpha()
+            is_colon = temp_path[i + 1] == ":"
+            is_separator = temp_path[i + 2] == "\\" or temp_path[i + 2] == "/"
+            is_drive_letter = is_alpha and is_colon and is_separator
 
-            if is_drive_letter:
-                # Replace C: with C@ to avoid splitting on drive letter colons
-                temp_path = temp_path[: i + 1] + "@" + temp_path[i + 2 :]
+            if is_drive_letter:                # Replace C: with C@ to avoid splitting on drive letter colons
+                temp_path = temp_path[:i + 1] + "@" + temp_path[i + 2:]
             i += 1
 
         # Now split by colons

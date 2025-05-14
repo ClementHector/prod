@@ -57,11 +57,18 @@ class Logger:
         # Create formatter
         formatter = logging.Formatter(
             "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
-
-        # Create console handler
+        )        # Create console handler with different formatting for INFO+ and DEBUG logs
         console_handler = logging.StreamHandler()
-        console_handler.setFormatter(formatter)
+
+        # For DEBUG level, use the detailed formatter
+        # For INFO and above, use a simpler formatter that just shows the message
+        if log_level == "DEBUG":
+            console_handler.setFormatter(formatter)
+        else:
+            # Only show messages of level INFO and higher in the console by default
+            console_handler.setLevel(logging.INFO)
+            console_handler.setFormatter(logging.Formatter("%(message)s"))
+
         logger.addHandler(console_handler)
 
         # Create file handler if log file is specified

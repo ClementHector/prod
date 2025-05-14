@@ -25,11 +25,19 @@ prod list
 * prod1
 ...
 
-# Enter in a production that will create the aliases based on the configuration files
+# Entre dans un environnement virtuel spécifique à la production
+# Un prompt personnalisé s'affiche, et toutes les variables d'environnement sont définies
 prod dlt
 
-# Launch maya
-maya
+# Vous êtes maintenant dans un shell interactif spécifique à la production
+# Le prompt indique la production active: [PROD:dlt]
+[PROD:dlt] /current/path>
+
+# Lancez des logiciels configurés dans l'environnement
+[PROD:dlt] /current/path> maya
+
+# Pour quitter l'environnement de production, utilisez simplement la commande exit
+[PROD:dlt] /current/path> exit
 ```
 
 ### Environment Configuration
@@ -92,15 +100,23 @@ The `prod` command manages production environments by:
 1. Reading the production configuration file to locate production paths
 2. Setting up environment variables with the correct configuration paths
 3. Creating Rez aliases based on the software and package configurations
+4. Launching an interactive shell with a custom prompt showing the production name
+
+When you enter a production environment with `prod <production_name>`, a new interactive shell is started with all the environment variables and aliases automatically configured. The shell uses a custom prompt to indicate which production is active, and provides the native `exit` command to leave the environment.
 
 Example workflow:
 ```bash
-# Enter the 'dlt' production
+# Enter the 'dlt' production (launches a new interactive shell)
 prod dlt
 
-# This will create Rez aliases based on the configuration
-# For example, for Maya it will create an alias equivalent to:
-rez env maya-2023.3.2 mtoa-2.3 golaem-4 vfxMayaTools-2.3 -- maya
+# Inside the interactive shell, you'll see a custom prompt:
+[PROD:dlt] /current/path>
+
+# Use any configured software directly
+[PROD:dlt] /current/path> maya
+
+# Use the native exit command to exit the production environment
+[PROD:dlt] /current/path> exit
 ```
 
 ### Command Line Options
@@ -219,27 +235,33 @@ maya --help
 ### Package Management
 
 ```bash
-# Enter production
+# Enter production interactive shell
 prod dlt
 
 # Override multiple packages for a software
-maya --packages golaem-6.3 vfxMayaTools-2.4
+[PROD:dlt]> maya --packages golaem-6.3 vfxMayaTools-2.4
 
 # Use a specific package version for development
-maya --packages vfxMayaTools-dev
+[PROD:dlt]> maya --packages vfxMayaTools-dev
+
+# Exit the production environment
+[PROD:dlt]> exit
 ```
 
 ### Development Workflow
 
 ```bash
-# Enter production
+# Enter production interactive shell
 prod dlt
 
 # Launch Maya with a development package
-maya --packages vfxMayaTools-dev
+[PROD:dlt]> maya --packages vfxMayaTools-dev
 
 # Enter in development environment of a package
-maya --packages vfxMayaTools-dev --env-only
+[PROD:dlt]> maya --packages vfxMayaTools-dev --env-only
+
+# When done, exit the production environment
+[PROD:dlt]> exit
 ```
 
 ## Extending the Tool
@@ -268,6 +290,7 @@ This tool is maintained by Technical Directors and Supervisors. Please contact t
 
 This project uses several tools to ensure code quality and security:
 
+- **autopep8**: For automatic PEP 8 style guide enforcement
 - **flake8**: For code style and syntax checking
 - **black**: For automatic code formatting
 - **isort**: For import sorting
@@ -279,6 +302,7 @@ To run these tools locally:
 
 ```bash
 # Code style and formatting
+autopep8 --in-place --aggressive --aggressive --recursive src tests
 black src tests
 isort src tests
 flake8 src tests --config=.flake8
@@ -290,8 +314,8 @@ mypy src
 bandit -r src -ll
 
 # Tests
-pytest tests/unittest -v  # Unit tests
-pytest tests/functional -v  # BDD tests
+pytest tests/unittest -v
+pytest tests/functional -v
 ```
 
 ## License

@@ -340,72 +340,82 @@ class ProductionEnvironment:
     def activate(self) -> None:
         """
         Activates the production environment.
+        Sets environment variables directly and creates Rez aliases.
+        Creates temporary shell scripts that will be used to enter a subshell where
+        the 'exit' command will properly return to the original environment.
         """
-        self._set_environment_variables()
-        self._create_rez_aliases()
 
-    def _set_environment_variables(self) -> None:
-        """
-        Sets up the environment variables.
-        """
-        # Set up environment variables from pipeline config
-        env_vars = self.pipeline_config.get_environment_variables()
+        # Set explicit software information in environment variables for the
+        # interactive shell
+        self._set_software_environment_variables()
 
-        # Add PROD environment variable if not explicitly set
-        if "PROD" not in env_vars:
-            env_vars["PROD"] = self.prod_name
+        # Get the list of software directly
+        software_list = []
+        for software in self.get_software_list():
+            name = software.get("name", "")
+            version = software.get("version", "")
+            software_list.append(f"{name}:{version}")
 
-        # Add PROD_ROOT if not explicitly set
-        if "PROD_ROOT" not in env_vars:
-            # Default PROD_ROOT is /s/prods/{PROD_NAME}
-            env_vars["PROD_ROOT"] = f"/s/prods/{self.prod_name}"
+        # Create shell script for setting environment variables in an interactive subshell
+        env_script = self.env_manager.generate_interactive_shell_script(
+            self.prod_name, software_list)
 
-        # Add PROD_TYPE if not explicitly set
-        if "PROD_TYPE" not in env_vars:
-            # Default PROD_TYPE is vfx
-            env_vars["PROD_TYPE"] = "vfx"
-
-        # Set the variables
-        self.env_manager.set_environment_variables(env_vars)
+        # Automatically apply environment variables to current process as well
+        self.env_manager.auto_apply_environment_variables()
 
         if self.logger:
-            self.logger.info(
-                f"Set environment variables for production '{self.prod_name}'"
-            )
-            self.logger.debug(
-                f"Environment variables: "
-                f"{', '.join(f'{k}={v}' for k, v in env_vars.items())}"
-            )
+            self.logger.debug(f"Environment script generated: {env_script}")
 
-    def _create_rez_aliases(self) -> None:
+        # Now we need to source this script to enter the interactive subshell
+        self.env_manager.source_interactive_shell(env_script)
+
+        # Note: This code will only be reached when the user exits the interactive
+        # subshell
+        if self.logger:
+            self.logger.debug(f"Exited production environment '{self.prod_name}'")
+
+    def _set_software_environment_variables(self) -> None:
         """
-        Creates Rez aliases for configured software.
+        Sets environment variables with software information.
+        This makes software information available to the interactive shell.
         """
-        software_list = self.software_config.get_configured_software()
+        # Set the PROD environment variable with the production name
+        self.env_manager._set_environment_variable("PROD", self.prod_name)
 
-        for software in software_list:
-            try:
-                # Get software version
-                version = self.software_config.get_software_version(software)
+        # Get the list of software with their versions
+        software_list = self.get_software_list()
 
-                # Get packages
-                packages = []
+        # Format as a string for the SOFTWARE_LIST environment variable
+        if software_list:
+            software_strings = []
+            for software in software_list:
+                name = software.get("name", "")
+                version = software.get("version", "")
+                # Create an environment variable for each software's version
+                env_var_name = f"{name.upper()}_VERSION"
+                self.env_manager._set_environment_variable(env_var_name, version)
 
-                # Add common packages
-                packages.extend(self.pipeline_config.get_common_packages())
+                # Add to the formatted list
+                software_strings.append(f"{name}:{version}")
 
-                # Add software-specific pipeline packages
-                packages.extend(self.pipeline_config.get_software_packages(software))
+            # Set the SOFTWARE_LIST environment variable
+            self.env_manager._set_environment_variable(
+                "SOFTWARE_LIST", ";".join(software_strings)
+            )
 
-                # Add software-specific required packages
-                packages.extend(self.software_config.get_required_packages(software))
+            if self.logger:
+                self.logger.debug(
+                    f"Set software environment variables: {', '.join(software_strings)}"
+                )
 
-                # Create alias
-                self.rez_manager.create_alias(software, version, packages)
+    def get_env_script_path(self) -> str:
+        """
+        Gets the path to the environment script.
 
-            except (ConfigError, Exception) as e:
-                if self.logger:
-                    self.logger.error(f"Failed to create alias for {software}: {e}")
+        Returns:
+            Path to the environment script
+        """
+        return self.env_manager.generate_shell_script(self.prod_name)
 
     def get_base_packages(self, software_name: str) -> List[str]:
         """

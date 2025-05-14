@@ -39,6 +39,11 @@ class CLI:
         # Main parser for prod command
         subparsers = parser.add_subparsers(dest="command", help="Command to execute")
 
+        # Add global verbosity option to main parser
+        parser.add_argument(
+            "--verbose", "-v", action="store_true", help="Verbose output"
+        )
+
         # List command
         list_parser = subparsers.add_parser("list", help="List available productions")
         list_parser.add_argument(
@@ -81,17 +86,17 @@ class CLI:
 
             enter_args = Args()
             enter_args.production = args[0]
-            enter_args.verbose = False
-            log_level = "INFO"
+
+            # Vérifier si --verbose ou -v est dans les arguments
+            enter_args.verbose = "--verbose" in args or "-v" in args
+            log_level = "DEBUG" if enter_args.verbose else "INFO"
             self.logger = Logger(log_level)
             self.error_handler = ErrorHandler(self.logger)
             return self._handle_enter_command(enter_args)
 
         # Initialisation du logger
-        is_list_cmd = getattr(parsed_args, "command", None) == "list"
         is_verbose = getattr(parsed_args, "verbose", False)
-
-        log_level = "DEBUG" if (is_list_cmd and is_verbose) else "INFO"
+        log_level = "DEBUG" if is_verbose else "INFO"
         self.logger = Logger(log_level)
 
         # Initialisation du gestionnaire d'erreurs
@@ -168,17 +173,8 @@ class CLI:
             env = ProductionEnvironment(args.production, self.logger)
             env.activate()
 
-            print(f"Entered production environment '{args.production}'")
-            print("Available software:")
-
-            # Print available software
-            software_list = env.get_software_list()
-            if software_list:
-                for software in software_list:
-                    print(f"* {software['name']} (version {software['version']})")
-            else:
-                print("No software configured for this production")
-
+            # This code will only be reached when the user exits the production
+            # environment
             return 0
 
         except Exception as e:
