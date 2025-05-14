@@ -201,11 +201,13 @@ class RezManager:
                     # Import only on Windows to avoid errors on other platforms
                     creationflags_value = 0
                     if platform.system() == "Windows":
-                        try:
-                            # Windows-only import
-                            from subprocess import CREATE_NEW_PROCESS_GROUP
-                            creationflags_value = CREATE_NEW_PROCESS_GROUP
-                        except ImportError:
+                        # We need to handle this differently for mypy
+                        # Python's subprocess on Windows defines CREATE_NEW_PROCESS_GROUP
+                        # We can't use a direct import as it will fail on non-Windows
+                        if hasattr(subprocess, "CREATE_NEW_PROCESS_GROUP"):
+                            # Use the attribute if it exists
+                            creationflags_value = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP")
+                        else:
                             # Fallback for older Python versions
                             creationflags_value = WINDOWS_CREATE_NEW_PROCESS_GROUP
                     

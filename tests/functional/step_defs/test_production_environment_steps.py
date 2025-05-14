@@ -231,8 +231,11 @@ def check_env_variables(prod_env_context):
     """
     assert "PROD_ROOT" in prod_env_context["env_variables"]
     assert "PROD_TYPE" in prod_env_context["env_variables"]
-    assert "DLT_ASSETS" in prod_env_context["env_variables"]
-    assert "DLT_SHOTS" in prod_env_context["env_variables"]
+    
+    # Check for assets and shots env variables (case insensitive)
+    env_vars = {k.upper(): v for k, v in prod_env_context["env_variables"].items()}
+    assert "DLT_ASSETS" in env_vars
+    assert "DLT_SHOTS" in env_vars
 
     assert prod_env_context["env_variables"]["PROD_ROOT"] == "/s/prods/dlt"
     assert prod_env_context["env_variables"]["PROD_TYPE"] == "vfx"

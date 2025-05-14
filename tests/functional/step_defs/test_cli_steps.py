@@ -51,13 +51,14 @@ def several_productions_exist(cli_context):
         os.makedirs(os.path.join(prods_dir, prod), exist_ok=True)
 
     # Mock pour CLI._handle_list_command pour utiliser notre répertoire de test
+    def path_join_side_effect(*args):
+        if len(args) > 1 and args[1] == "../config/prods":
+            return os.path.join(cli_context["temp_dir"].name, "config", "prods")
+        return os.path.join(*args)
+        
     cli_context["mock_prods_dir"] = mock.patch(
         "src.cli.os.path.join",
-        side_effect=lambda *args: (
-            os.path.join(cli_context["temp_dir"].name, "config", "prods")
-            if args[1] == "../config/prods"
-            else os.path.join(*args)
-        ),
+        side_effect=path_join_side_effect
     )
 
 
@@ -74,8 +75,10 @@ def valid_production_exists(cli_context, prod_name):
     cli_context["prod_name"] = prod_name
 
     # Mock pour ProductionEnvironment pour éviter d'accéder aux fichiers réels
+    mock_prod_env = mock.MagicMock()
     cli_context["mock_prod_env"] = mock.patch(
-        "src.cli.ProductionEnvironment", autospec=True
+        "src.cli.ProductionEnvironment", 
+        return_value=mock_prod_env
     )
 
 
@@ -91,8 +94,10 @@ def in_production_environment(cli_context, prod_name):
     )
 
     # Mock pour ProductionEnvironment.execute_software
+    mock_execute = mock.MagicMock()
     cli_context["mock_execute_software"] = mock.patch(
-        "src.production_environment.ProductionEnvironment.execute_software"
+        "src.production_environment.ProductionEnvironment.execute_software",
+        mock_execute
     )
 
 
@@ -194,15 +199,18 @@ def check_environment_variables(cli_context):
     """Vérifier que les variables d'environnement sont définies pour la production."""
     # Cette vérification est implicite car nous mockons ProductionEnvironment
     # Le mock de ProductionEnvironment.activate() aurait été appelé
-    mock_prod_env = cli_context["mock_prod_env"]
-    assert mock_prod_env.return_value.activate.called
+    # Get the mock from the context
+    assert "mock_prod_env" in cli_context
+    mock_prod_env_instance = cli_context["mock_prod_env"].return_value
+    assert mock_prod_env_instance.activate.called
 
 
 @then("Maya should be launched with the correct settings")
 def check_maya_launched(cli_context):
     """Vérifier que Maya est lancé avec les paramètres corrects."""
     # Vérifier que execute_software a été appelé avec les bons arguments
-    mock_execute = cli_context["mock_execute_software"]
+    assert "mock_execute_software" in cli_context
+    mock_execute = cli_context["mock_execute_software"].return_value
     assert mock_execute.called
 
     # Vérifier les arguments de l'appel
@@ -221,7 +229,8 @@ def check_maya_launched(cli_context):
 def check_maya_launched_with_package(cli_context, package):
     """Vérifier que Maya est lancé avec le package supplémentaire spécifié."""
     # Vérifier que execute_software a été appelé avec les bons arguments
-    mock_execute = cli_context["mock_execute_software"]
+    assert "mock_execute_software" in cli_context
+    mock_execute = cli_context["mock_execute_software"].return_value
     assert mock_execute.called
 
     # Vérifier les arguments de l'appel
@@ -237,7 +246,8 @@ def check_maya_launched_with_package(cli_context, package):
 def check_in_rez_environment(cli_context):
     """Vérifier que l'utilisateur est dans un environnement Rez pour Maya."""
     # Vérifier que execute_software a été appelé avec les bons arguments
-    mock_execute = cli_context["mock_execute_software"]
+    assert "mock_execute_software" in cli_context
+    mock_execute = cli_context["mock_execute_software"].return_value
     assert mock_execute.called
 
     # Vérifier les arguments de l'appel
