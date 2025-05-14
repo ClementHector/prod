@@ -178,9 +178,7 @@ PIPELINE_CONFIG=%s/config/studio/pipeline.ini:
     # Mock pour EnvironmentManager.set_environment_variables
     prod_env_context["mock_set_env_vars"] = mock.patch(
         "src.environment_manager.EnvironmentManager.set_environment_variables",
-        side_effect=lambda vars: prod_env_context["env_variables"].update(
-            vars
-        ),
+        side_effect=lambda vars: prod_env_context["env_variables"].update(vars),
     )
 
     # Mock pour RezManager.create_alias
@@ -231,7 +229,7 @@ def check_env_variables(prod_env_context):
     """
     assert "PROD_ROOT" in prod_env_context["env_variables"]
     assert "PROD_TYPE" in prod_env_context["env_variables"]
-    
+
     # Check for assets and shots env variables (case insensitive)
     env_vars = {k.upper(): v for k, v in prod_env_context["env_variables"].items()}
     assert "DLT_ASSETS" in env_vars
@@ -254,9 +252,7 @@ def check_prod_env_var(prod_env_context):
 @then("Rez aliases should be created for all configured software")
 def check_rez_aliases_created(prod_env_context):
     """Vérifier que des alias Rez sont créés pour tous les logiciels configurés."""
-    software_names = {
-        alias["software"] for alias in prod_env_context["rez_aliases"]
-    }
+    software_names = {alias["software"] for alias in prod_env_context["rez_aliases"]}
     assert "maya" in software_names
     assert "nuke" in software_names
     assert "nuke-13" in software_names
@@ -269,15 +265,13 @@ def check_alias_packages(prod_env_context):
     for alias in prod_env_context["rez_aliases"]:
         if alias["software"] == "maya":
             assert "vfxCore-2.5" in alias["packages"]  # Common package
-            assert ("vfxMayaTools-2.3" in
-                    alias["packages"])  # Maya-specific package
+            assert "vfxMayaTools-2.3" in alias["packages"]  # Maya-specific package
             assert "mtoa-2.3" in alias["packages"]  # Plugin
             assert "golaem-4" in alias["packages"]  # Plugin
 
         elif alias["software"] == "nuke":
             assert "vfxCore-2.5" in alias["packages"]  # Common package
-            assert ("vfxNukeTools-2.1" in
-                    alias["packages"])  # Nuke-specific package
+            assert "vfxNukeTools-2.1" in alias["packages"]  # Nuke-specific package
             assert "ofxSuperResolution" in alias["packages"]  # Plugin
             assert "neatVideo" in alias["packages"]  # Plugin
 
@@ -285,7 +279,7 @@ def check_alias_packages(prod_env_context):
 @then("I should get a list of all configured software with their versions")
 def check_software_list(prod_env_context):
     """
-    Vérifier que la liste des logiciels configurés avec leurs versions 
+    Vérifier que la liste des logiciels configurés avec leurs versions
     est correcte.
     """
     with (
@@ -295,17 +289,14 @@ def check_software_list(prod_env_context):
 
         if "prod_env" not in prod_env_context:
             prod_env = ProductionEnvironment(
-                prod_env_context["prod_name"], 
-                prod_env_context["logger"]
+                prod_env_context["prod_name"], prod_env_context["logger"]
             )
             prod_env_context["prod_env"] = prod_env
 
         software_list = prod_env_context["prod_env"].get_software_list()
 
         # Vérifier que tous les logiciels sont dans la liste
-        software_dict = {
-            sw["name"]: sw["version"] for sw in software_list
-        }
+        software_dict = {sw["name"]: sw["version"] for sw in software_list}
         assert "maya" in software_dict
         assert "nuke" in software_dict
         assert "nuke-13" in software_dict
@@ -341,15 +332,11 @@ def production_env_activated(prod_env_context):
 def execute_maya_with_packages(prod_env_context):
     """Exécuter Maya avec des packages supplémentaires."""
     # Mock pour execute_with_rez
-    with mock.patch(
-        "src.rez_manager.RezManager.execute_with_rez"
-    ) as mock_execute:
+    with mock.patch("src.rez_manager.RezManager.execute_with_rez") as mock_execute:
         mock_execute.return_value = (0, "", "")
 
         additional_packages = ["dev-package-1", "dev-package-2"]
-        prod_env_context["prod_env"].execute_software(
-            "maya", additional_packages
-        )
+        prod_env_context["prod_env"].execute_software("maya", additional_packages)
 
         # Sauvegarder les arguments dans le contexte
         prod_env_context["execute_args"] = mock_execute.call_args[0]

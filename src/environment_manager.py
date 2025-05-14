@@ -77,12 +77,9 @@ class EnvironmentManager:
 
                 # Check if the path is already in the existing path
                 if existing_path and norm_path not in [
-                    self._normalize_path(p)
-                    for p in existing_path.split(separator)
+                    self._normalize_path(p) for p in existing_path.split(separator)
                 ]:
-                    new_path = (
-                        f"{path}{separator}{new_path}" if new_path else path
-                    )
+                    new_path = f"{path}{separator}{new_path}" if new_path else path
 
             # Set the new path
             self._set_environment_variable(key, new_path)

@@ -11,4 +11,7 @@ ignore =
     # Ignorer les problèmes d'indentation pour les lignes continuées
     E128,
     # Tolérer les f-strings sans placeholders
-    F541
+    F541,
+    # Ignorer les conflits de style pour line break avant/après opérateur binaire
+    W503,
+    W504

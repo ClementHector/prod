@@ -26,3 +26,10 @@ Feature: Configuration management
     When I load both configuration files
     And I apply a temporary override to Maya version
     Then I should get the overridden Maya version 
+    
+  Scenario: Cross-platform path separators
+    Given a prod-settings.ini file with mixed path separators
+    When I initialize the production environment
+    Then the configuration paths should be correctly split
+    And the software configuration should be properly loaded
+    And the available software should be correctly listed 

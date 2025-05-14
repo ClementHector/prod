@@ -28,9 +28,7 @@ class ConfigManager:
             self.config_parser.read(config_path)
             self._validate_config()
         else:
-            raise FileNotFoundError(
-                f"Configuration file not found: {config_path}"
-            )
+            raise FileNotFoundError(f"Configuration file not found: {config_path}")
 
     def _validate_config(self) -> None:
         """
@@ -43,7 +41,7 @@ class ConfigManager:
     def merge_configs(self, configs: List[str]) -> None:
         """
         Merges multiple configuration files.
-        Configurations are processed from left to right, 
+        Configurations are processed from left to right,
         with later files overriding earlier ones.
 
         Args:
@@ -95,9 +93,7 @@ class ConfigManager:
 
         raise KeyError(f"Configuration key not found: {section}.{key}")
 
-    def apply_temporary_override(
-        self, section: str, key: str, value: str
-    ) -> None:
+    def apply_temporary_override(self, section: str, key: str, value: str) -> None:
         """
         Applies a temporary override for a configuration value.
 

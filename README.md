@@ -26,7 +26,7 @@ prod list
 ...
 
 # Enter in a production that will create the aliases based on the configuration files
-prod enter dlt
+prod dlt
 
 # Launch maya
 maya
@@ -96,7 +96,7 @@ The `prod` command manages production environments by:
 Example workflow:
 ```bash
 # Enter the 'dlt' production
-prod enter dlt
+prod dlt
 
 # This will create Rez aliases based on the configuration
 # For example, for Maya it will create an alias equivalent to:
@@ -143,7 +143,7 @@ maya --help
    ```bash
    # Install in development mode
    pip install -e .
-   
+
    # Or install normally
    pip install .
    ```
@@ -167,9 +167,9 @@ maya --help
    ```bash
    # List available productions
    prod list
-   
+
    # Enter a production
-   prod enter your_production
+   prod your_production
    ```
 
 4. Use the created Rez aliases to launch software with the correct configuration:
@@ -220,7 +220,7 @@ maya --help
 
 ```bash
 # Enter production
-prod enter dlt
+prod dlt
 
 # Override multiple packages for a software
 maya --packages golaem-6.3 vfxMayaTools-2.4
@@ -233,7 +233,7 @@ maya --packages vfxMayaTools-dev
 
 ```bash
 # Enter production
-prod enter dlt
+prod dlt
 
 # Launch Maya with a development package
 maya --packages vfxMayaTools-dev
@@ -279,9 +279,9 @@ To run these tools locally:
 
 ```bash
 # Code style and formatting
-flake8 src tests --config=.flake8
 black src tests
 isort src tests
+flake8 src tests --config=.flake8
 
 # Type checking
 mypy src

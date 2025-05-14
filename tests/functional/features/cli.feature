@@ -10,7 +10,7 @@ Feature: Command line interface
 
   Scenario: Entering a production environment
     Given a valid production "dlt" exists
-    When I run the command "prod enter dlt"
+    When I run the command "prod dlt"
     Then I should see a confirmation message
     And I should see a list of available software for that production
     And the environment variables should be set for that production

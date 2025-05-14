@@ -37,24 +37,11 @@ class CLI:
         )
 
         # Main parser for prod command
-        subparsers = parser.add_subparsers(
-            dest="command", help="Command to execute"
-        )
+        subparsers = parser.add_subparsers(dest="command", help="Command to execute")
 
         # List command
-        list_parser = subparsers.add_parser(
-            "list", help="List available productions"
-        )
+        list_parser = subparsers.add_parser("list", help="List available productions")
         list_parser.add_argument(
-            "--verbose", "-v", action="store_true", help="Verbose output"
-        )
-
-        # Enter command
-        enter_parser = subparsers.add_parser(
-            "enter", help="Enter a production environment"
-        )
-        enter_parser.add_argument("production", help="Production name")
-        enter_parser.add_argument(
             "--verbose", "-v", action="store_true", help="Verbose output"
         )
 
@@ -75,31 +62,45 @@ class CLI:
         if args is None:
             args = sys.argv[1:]
 
-        # If no arguments, show help
+        # Si aucun argument, afficher l'aide
         if not args:
             self.parser.print_help()
             return 0
 
-        # Parse arguments
-        parsed_args = self.parser.parse_args(args)
+        # On parse d'abord la sous-commande connue
+        known_commands = {"list"}
+        if args[0] in known_commands:
+            parsed_args = self.parser.parse_args(args)
+        else:
+            # Si le premier argument n'est pas une sous-commande
+            # On le traite comme un nom de production
+            class Args(argparse.Namespace):
+                """Simple namespace to mimic argparse.Namespace."""
 
-        # Initialize logger
-        log_level = (
-            "DEBUG"
-            if parsed_args.command == "list" and parsed_args.verbose
-            else "INFO"
-        )
+                pass
+
+            enter_args = Args()
+            enter_args.production = args[0]
+            enter_args.verbose = False
+            log_level = "INFO"
+            self.logger = Logger(log_level)
+            self.error_handler = ErrorHandler(self.logger)
+            return self._handle_enter_command(enter_args)
+
+        # Initialisation du logger
+        is_list_cmd = getattr(parsed_args, "command", None) == "list"
+        is_verbose = getattr(parsed_args, "verbose", False)
+
+        log_level = "DEBUG" if (is_list_cmd and is_verbose) else "INFO"
         self.logger = Logger(log_level)
 
-        # Initialize error handler
+        # Initialisation du gestionnaire d'erreurs
         self.error_handler = ErrorHandler(self.logger)
 
-        # Handle commands
+        # Gestion des commandes
         try:
             if parsed_args.command == "list":
                 return self._handle_list_command(parsed_args)
-            elif parsed_args.command == "enter":
-                return self._handle_enter_command(parsed_args)
             else:
                 self.parser.print_help()
                 return 0
@@ -174,9 +175,7 @@ class CLI:
             software_list = env.get_software_list()
             if software_list:
                 for software in software_list:
-                    print(
-                        f"* {software['name']} (version {software['version']})"
-                    )
+                    print(f"* {software['name']} (version {software['version']})")
             else:
                 print("No software configured for this production")
 

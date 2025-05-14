@@ -104,19 +104,15 @@ def check_merged_sections(config_context):
 @then("production-specific values should override studio-wide values")
 def check_override_values(config_context):
     """
-    Vérifier que les valeurs spécifiques à la production 
+    Vérifier que les valeurs spécifiques à la production
     remplacent les valeurs studio.
     """
     # Maya version should be from prod config
-    maya_version = config_context["config_manager"].get_merged_config(
-        "maya", "version"
-    )
+    maya_version = config_context["config_manager"].get_merged_config("maya", "version")
     assert maya_version == "2023.3.2"
 
     # Nuke version should be from prod config
-    nuke_version = config_context["config_manager"].get_merged_config(
-        "nuke", "version"
-    )
+    nuke_version = config_context["config_manager"].get_merged_config("nuke", "version")
     assert nuke_version == "12.3"
 
     # Houdini version should be from studio config (not overridden)
@@ -129,18 +125,14 @@ def check_override_values(config_context):
 @then("I should get the production-specific Maya version")
 def check_maya_version(config_context):
     """Vérifier que la version de Maya est celle spécifique à la production."""
-    maya_version = config_context["config_manager"].get_merged_config(
-        "maya", "version"
-    )
+    maya_version = config_context["config_manager"].get_merged_config("maya", "version")
     assert maya_version == "2023.3.2"
 
 
 @then("I should get the production-specific Nuke version")
 def check_nuke_version(config_context):
     """Vérifier que la version de Nuke est celle spécifique à la production."""
-    nuke_version = config_context["config_manager"].get_merged_config(
-        "nuke", "version"
-    )
+    nuke_version = config_context["config_manager"].get_merged_config("nuke", "version")
     assert nuke_version == "12.3"
 
 
@@ -175,7 +167,147 @@ def apply_override(config_context):
 @then("I should get the overridden Maya version")
 def check_overridden_version(config_context):
     """Vérifier que la version de Maya est celle spécifiée par l'override."""
-    maya_version = config_context["config_manager"].get_merged_config(
-        "maya", "version"
-    )
+    maya_version = config_context["config_manager"].get_merged_config("maya", "version")
     assert maya_version == "2023.4.0"
+
+
+@given("a prod-settings.ini file with mixed path separators")
+def prod_settings_with_mixed_separators(config_context):
+    """Create a prod-settings.ini file with mixed path separators."""
+    # Create the prod-settings.ini file
+    settings_path = os.path.join(config_context["temp_dir"].name, "prod-settings.ini")
+
+    with open(settings_path, "w") as f:
+        f.write(
+            """
+[environment]
+SOFTWARE_CONFIG=C:\\path\\to\\studio\\software.ini:/unix/path/software.ini:C:\\path\\to\\prod\\{PROD_NAME}\\config\\software.ini
+PIPELINE_CONFIG=C:\\path\\to\\studio\\pipeline.ini:/unix/path/pipeline.ini:C:\\path\\to\\prod\\{PROD_NAME}\\config\\pipeline.ini
+"""
+        )
+
+    config_context["settings_path"] = settings_path
+    config_context["prod_name"] = "test_prod"
+
+
+@when("I initialize the production environment")
+def initialize_production_environment(config_context, monkeypatch):
+    """Initialize the production environment with the mixed path separators."""
+    from src.logger import Logger
+    from src.production_environment import ProductionEnvironment
+
+    # Mock the logger
+    logger = Logger()
+
+    # Mock the file existence check to return True
+    monkeypatch.setattr(os.path, "exists", lambda path: True)
+
+    # Define a non-recursive mock function for os.path.join
+    def mock_path_join(*args):
+        if args and "prod-settings.ini" in args[-1]:
+            return config_context["settings_path"]
+        # Use the real os.path.join for other cases, but avoiding recursion
+        return os.path.normpath("/".join(args))
+
+    # Mock os.path.join
+    monkeypatch.setattr(os.path, "join", mock_path_join)
+
+    # Create the production environment
+    config_context["prod_env"] = ProductionEnvironment(
+        config_context["prod_name"], logger
+    )
+
+
+@then("the configuration paths should be correctly split")
+def check_configuration_paths(config_context):
+    """Check that the configuration paths are correctly split."""
+    config_paths = config_context["prod_env"].config_paths
+
+    # Get the actual paths as they are
+    software_paths = config_paths["software"]
+    pipeline_paths = config_paths["pipeline"]
+
+    # Manually check that the expected path segments are present
+    found_studio_software = False
+    found_unix_software = False
+    found_prod_software = False
+
+    # Check in all path strings for each piece
+    for path in software_paths:
+        if "studio" in path and "software.ini" in path:
+            found_studio_software = True
+        if "/unix/path" in path and "software.ini" in path:
+            found_unix_software = True
+        if "prod" in path and "test_prod" in path and "software.ini" in path:
+            found_prod_software = True
+
+    # Assert that all path segments were found
+    assert found_studio_software, "Missing studio software path"
+    assert found_unix_software, "Missing Unix software path"
+    assert found_prod_software, "Missing production software path"
+
+    # Similar check for pipeline paths
+    found_studio_pipeline = False
+    found_unix_pipeline = False
+    found_prod_pipeline = False
+
+    for path in pipeline_paths:
+        if "studio" in path and "pipeline.ini" in path:
+            found_studio_pipeline = True
+        if "/unix/path" in path and "pipeline.ini" in path:
+            found_unix_pipeline = True
+        if "prod" in path and "test_prod" in path and "pipeline.ini" in path:
+            found_prod_pipeline = True
+
+    # Assert that all path segments were found
+    assert found_studio_pipeline, "Missing studio pipeline path"
+    assert found_unix_pipeline, "Missing Unix pipeline path"
+    assert found_prod_pipeline, "Missing production pipeline path"
+
+
+@then("the software configuration should be properly loaded")
+def check_software_configuration_loading(config_context, monkeypatch):
+    """Check that the software configuration is properly loaded."""
+    # This step is mainly to verify that no errors occur during configuration loading
+    # We've already mocked the file existence check, so this is a simple assertion
+    assert hasattr(config_context["prod_env"], "software_config")
+    assert config_context["prod_env"].software_config is not None
+
+
+@then("the available software should be correctly listed")
+def check_available_software(config_context, monkeypatch):
+    """Check that the available software is correctly listed."""
+    # Mock the get_configured_software method to return a list of software
+    monkeypatch.setattr(
+        config_context["prod_env"].software_config,
+        "get_configured_software",
+        lambda: ["maya", "nuke", "houdini"],
+    )
+
+    # Mock the get_software_version method to return a version for each software
+    def mock_get_software_version(software_name):
+        versions = {"maya": "2023.3.2", "nuke": "13.2", "houdini": "19.5"}
+        return versions.get(software_name, "1.0.0")
+
+    monkeypatch.setattr(
+        config_context["prod_env"].software_config,
+        "get_software_version",
+        mock_get_software_version,
+    )
+
+    # Get the software list
+    software_list = config_context["prod_env"].get_software_list()
+
+    # Check the software list
+    assert len(software_list) == 3
+
+    # Check all expected software is present
+    software_names = [item["name"] for item in software_list]
+    assert "maya" in software_names
+    assert "nuke" in software_names
+    assert "houdini" in software_names
+
+    # Check that versions are included
+    for item in software_list:
+        assert "version" in item, f"Version missing for {item['name']}"
+        assert item["version"] == mock_get_software_version(item["name"])
