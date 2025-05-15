@@ -230,7 +230,7 @@ def step_impl_initialize_prod_env(context):
                 with patch("src.production_environment.ConfigManager.load_config"):
                     # Initialize the production environment
                     context.prod_env = ProductionEnvironment(
-                        "test_prod", context.logger
+                        "test_prod",
                     )
 
                     # Store the config paths for verification
@@ -286,7 +286,7 @@ def step_impl_software_config_properly_loaded(context):
                 with patch.object(
                     ConfigManager, "load_config", mock_load_config_side_effect
                 ):
-                    prod_env = ProductionEnvironment("test_prod", context.logger)
+                    prod_env = ProductionEnvironment("test_prod")
 
                     # Verify that the software configuration is correctly loaded
                     assert (
@@ -331,7 +331,7 @@ def step_impl_available_software_correctly_listed(context):
                         else None
                     ),
                 ):
-                    prod_env = ProductionEnvironment("test_prod", context.logger)
+                    prod_env = ProductionEnvironment("test_prod")
 
                     # Get the list of available software
                     software_list = prod_env.software_config.get_configured_software()
@@ -347,7 +347,7 @@ def request_software_configuration(context):
     # Mock config manager to return our test config
     with patch.object(ConfigManager, "load_config", return_value=context.merged_config):
         # Create a ProductionEnvironment
-        context.prod_env = ProductionEnvironment("test_prod", Logger())
+        context.prod_env = ProductionEnvironment("test_prod")
 
         # Get the software configuration
         context.software_config = context.prod_env.get_software_config()

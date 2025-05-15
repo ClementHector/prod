@@ -9,17 +9,17 @@ from typing import Dict, List, Optional, cast
 from src.config_manager import ConfigManager
 from src.environment_manager import EnvironmentManager
 from src.error_handler import ConfigError
-from src.logger import Logger
 from src.path_processor import PathProcessor
 from src.rez_manager import RezManager
 
+from src.logger import get_logger
 
 class SoftwareConfig:
     """
     Manages software configuration.
     """
 
-    def __init__(self, config_manager: ConfigManager, logger: Optional[Logger] = None):
+    def __init__(self, config_manager: ConfigManager):
         """
         Initializes the software configuration.
 
@@ -28,7 +28,7 @@ class SoftwareConfig:
             logger: Logger instance
         """
         self.config_manager = config_manager
-        self.logger = logger
+        self.logger = get_logger()
 
     def get_software_version(self, software_name: str) -> str:
         """
@@ -75,8 +75,7 @@ class SoftwareConfig:
             )
             return cast(List[str], ast.literal_eval(packages_str))
         except (KeyError, SyntaxError, ValueError) as e:
-            if self.logger:
-                self.logger.warning(f"Error parsing packages for {software_name}: {e}")
+            self.logger.warning(f"Error parsing packages for {software_name}: {e}")
             return []
 
     def get_configured_software(self) -> List[str]:
@@ -86,8 +85,6 @@ class SoftwareConfig:
         Returns:
             List of software names
         """
-        # Filter sections that correspond to software
-        # (excluding 'common', 'environment', etc.)
         excluded_sections = ["common", "environment"]
         return [
             section
@@ -101,7 +98,7 @@ class PipelineConfig:
     Manages pipeline configuration.
     """
 
-    def __init__(self, config_manager: ConfigManager, logger: Optional[Logger] = None):
+    def __init__(self, config_manager: ConfigManager):
         """
         Initializes the pipeline configuration.
 
@@ -110,7 +107,7 @@ class PipelineConfig:
             logger: Logger instance
         """
         self.config_manager = config_manager
-        self.logger = logger
+        self.logger = get_logger()
 
     def get_common_packages(self) -> List[str]:
         """
@@ -125,8 +122,7 @@ class PipelineConfig:
             )
             return cast(List[str], ast.literal_eval(packages_str))
         except (KeyError, SyntaxError, ValueError) as e:
-            if self.logger:
-                self.logger.warning(f"Error parsing common packages: {e}")
+            self.logger.warning(f"Error parsing common packages: {e}")
             return []
 
     def get_software_packages(self, software_name: str) -> List[str]:
@@ -147,8 +143,7 @@ class PipelineConfig:
                 return cast(List[str], ast.literal_eval(packages_str))
             return []
         except (KeyError, SyntaxError, ValueError) as e:
-            if self.logger:
-                self.logger.warning(f"Error parsing packages for {software_name}: {e}")
+            self.logger.warning(f"Error parsing packages for {software_name}: {e}")
             return []
 
     def get_environment_variables(self) -> Dict[str, str]:
@@ -169,7 +164,7 @@ class ProductionEnvironment:
     Manages a production environment.
     """
 
-    def __init__(self, prod_name: str, logger: Optional[Logger] = None):
+    def __init__(self, prod_name: str):
         """
         Initializes the production environment.
 
@@ -178,12 +173,12 @@ class ProductionEnvironment:
             logger: Logger instance
         """
         self.prod_name = prod_name
-        self.logger = logger
+        self.logger = get_logger()
         self.config_paths = self._load_config_paths()
         self.software_config = self._parse_software_config()
         self.pipeline_config = self._parse_pipeline_config()
-        self.env_manager = EnvironmentManager(logger)
-        self.rez_manager = RezManager(logger)
+        self.env_manager = EnvironmentManager()
+        self.rez_manager = RezManager()
 
     def _load_config_paths(self) -> Dict[str, List[str]]:
         """
@@ -192,7 +187,6 @@ class ProductionEnvironment:
         Returns:
             Dictionary of configuration paths
         """
-        # Load from prod-settings.ini
         settings_path = os.path.join(
             os.path.dirname(__file__), "../config/prod-settings.ini"
         )
@@ -203,11 +197,9 @@ class ProductionEnvironment:
         settings = ConfigManager()
         settings.load_config(settings_path)
 
-        # Get the configuration paths
         if not settings.has_section("environment"):
-            raise ConfigError(f"Missing 'environment' section in prod settings file")
+            raise ConfigError("Missing 'environment' section in prod settings file")
 
-        # Replace {PROD_NAME} with actual production name
         software_config_path = settings.get_merged_config(
             "environment", "SOFTWARE_CONFIG", ""
         )
@@ -217,83 +209,61 @@ class ProductionEnvironment:
 
         software_paths = []
         if software_config_path:
-            # Replace the production name placeholder in the path
             software_config_path = software_config_path.replace(
                 "{PROD_NAME}", self.prod_name
             )
 
-            # Handle Windows paths with semicolons as separators
             if ";" in software_config_path:
                 parts = software_config_path.split(";")
 
-                # Process each part separately
                 for part in parts:
                     if not part:
                         continue
 
-                    # Handle any colons in this part
                     if ":" in part and part.startswith("/"):
-                        # This is a Unix path - split by colon
                         unix_parts = part.split(":")
                         software_paths.extend([p for p in unix_parts if p])
                     else:
-                        # Windows path or other
                         software_paths.append(part)
-            # Special case for Unix paths - they start with / and use : as a separator
             elif software_config_path.startswith("/") and ":" in software_config_path:
-                # Pure Unix paths - just split by colon
                 software_paths = [p for p in software_config_path.split(":") if p]
             elif ":" in software_config_path:
-                # Handle Windows paths with drive letters
                 path_processor = PathProcessor(software_config_path)
                 software_paths = path_processor.split_paths()
             else:
-                # Single path, no separators
                 software_paths = [software_config_path]
 
         pipeline_paths = []
         if pipeline_config_path:
-            # Replace the production name placeholder in the path
             pipeline_config_path = pipeline_config_path.replace(
                 "{PROD_NAME}", self.prod_name
             )
 
-            # Handle Windows paths with semicolons as separators
             if ";" in pipeline_config_path:
                 parts = pipeline_config_path.split(";")
 
-                # Process each part separately
                 for part in parts:
                     if not part:
                         continue
 
-                    # Handle any colons in this part
                     if ":" in part and part.startswith("/"):
-                        # This is a Unix path - split by colon
                         unix_parts = part.split(":")
                         pipeline_paths.extend([p for p in unix_parts if p])
                     else:
-                        # Windows path or other
                         pipeline_paths.append(part)
-            # Special case for Unix paths - they start with / and use : as a separator
             elif pipeline_config_path.startswith("/") and ":" in pipeline_config_path:
-                # Pure Unix paths - just split by colon
                 pipeline_paths = [p for p in pipeline_config_path.split(":") if p]
             elif ":" in pipeline_config_path:
-                # Handle Windows paths with drive letters
                 path_processor = PathProcessor(pipeline_config_path)
                 pipeline_paths = path_processor.split_paths()
             else:
-                # Single path, no separators
                 pipeline_paths = [pipeline_config_path]
 
-        # Filter out empty paths
         software_paths = [path for path in software_paths if path]
         pipeline_paths = [path for path in pipeline_paths if path]
 
-        if self.logger:
-            self.logger.debug(f"Software config paths: {software_paths}")
-            self.logger.debug(f"Pipeline config paths: {pipeline_paths}")
+        self.logger.debug(f"Software config paths: {software_paths}")
+        self.logger.debug(f"Pipeline config paths: {pipeline_paths}")
 
         return {"software": software_paths, "pipeline": pipeline_paths}
 
@@ -308,14 +278,12 @@ class ProductionEnvironment:
 
         for config_path in self.config_paths["software"]:
             if os.path.exists(config_path):
-                if self.logger:
-                    self.logger.debug(f"Loading software config: {config_path}")
+                self.logger.debug(f"Loading software config: {config_path}")
                 config_manager.load_config(config_path)
             else:
-                if self.logger:
-                    self.logger.warning(f"Software config not found: {config_path}")
+                self.logger.warning(f"Software config not found: {config_path}")
 
-        return SoftwareConfig(config_manager, self.logger)
+        return SoftwareConfig(config_manager)
 
     def _parse_pipeline_config(self) -> PipelineConfig:
         """
@@ -328,14 +296,12 @@ class ProductionEnvironment:
 
         for config_path in self.config_paths["pipeline"]:
             if os.path.exists(config_path):
-                if self.logger:
-                    self.logger.debug(f"Loading pipeline config: {config_path}")
+                self.logger.debug(f"Loading pipeline config: {config_path}")
                 config_manager.load_config(config_path)
             else:
-                if self.logger:
-                    self.logger.warning(f"Pipeline config not found: {config_path}")
+                self.logger.warning(f"Pipeline config not found: {config_path}")
 
-        return PipelineConfig(config_manager, self.logger)
+        return PipelineConfig(config_manager)
 
     def activate(self) -> None:
         """
@@ -345,68 +311,21 @@ class ProductionEnvironment:
         the 'exit' command will properly return to the original environment.
         """
 
-        # Set explicit software information in environment variables for the
-        # interactive shell
-        self._set_software_environment_variables()
-
-        # Get the list of software directly
         software_list = []
         for software in self.get_software_list():
             name = software.get("name", "")
             version = software.get("version", "")
             software_list.append(f"{name}:{version}")
 
-        # Create shell script for setting environment variables in an interactive subshell
         env_script = self.env_manager.generate_interactive_shell_script(
-            self.prod_name, software_list)
+            self.prod_name, software_list
+        )
 
-        # Automatically apply environment variables to current process as well
-        self.env_manager.auto_apply_environment_variables()
+        self.logger.debug(f"Environment script generated: {env_script}")
 
-        if self.logger:
-            self.logger.debug(f"Environment script generated: {env_script}")
-
-        # Now we need to source this script to enter the interactive subshell
         self.env_manager.source_interactive_shell(env_script)
 
-        # Note: This code will only be reached when the user exits the interactive
-        # subshell
-        if self.logger:
-            self.logger.debug(f"Exited production environment '{self.prod_name}'")
-
-    def _set_software_environment_variables(self) -> None:
-        """
-        Sets environment variables with software information.
-        This makes software information available to the interactive shell.
-        """
-        # Set the PROD environment variable with the production name
-        self.env_manager._set_environment_variable("PROD", self.prod_name)
-
-        # Get the list of software with their versions
-        software_list = self.get_software_list()
-
-        # Format as a string for the SOFTWARE_LIST environment variable
-        if software_list:
-            software_strings = []
-            for software in software_list:
-                name = software.get("name", "")
-                version = software.get("version", "")
-                # Create an environment variable for each software's version
-                env_var_name = f"{name.upper()}_VERSION"
-                self.env_manager._set_environment_variable(env_var_name, version)
-
-                # Add to the formatted list
-                software_strings.append(f"{name}:{version}")
-
-            # Set the SOFTWARE_LIST environment variable
-            self.env_manager._set_environment_variable(
-                "SOFTWARE_LIST", ";".join(software_strings)
-            )
-
-            if self.logger:
-                self.logger.debug(
-                    f"Set software environment variables: {', '.join(software_strings)}"
-                )
+        self.logger.debug(f"Exited production environment '{self.prod_name}'")
 
     def get_env_script_path(self) -> str:
         """
@@ -429,13 +348,8 @@ class ProductionEnvironment:
         """
         packages = []
 
-        # Add common packages
         packages.extend(self.pipeline_config.get_common_packages())
-
-        # Add software-specific pipeline packages
         packages.extend(self.pipeline_config.get_software_packages(software_name))
-
-        # Add software-specific required packages
         packages.extend(self.software_config.get_required_packages(software_name))
 
         return packages
@@ -481,25 +395,17 @@ class ProductionEnvironment:
             additional_packages = []
 
         try:
-            # Get software version
             version = self.software_config.get_software_version(software_name)
-
-            # Get base packages
             packages = self.get_base_packages(software_name)
-
-            # Add additional packages
             packages.extend(additional_packages)
 
-            # Execute with Rez
-            return_code, stdout, stderr = self.rez_manager.execute_with_rez(
+            return_code, _, stderr = self.rez_manager.execute_with_rez(
                 software_name, version, packages, software_name, env_only, background
             )
 
-            if return_code != 0:
-                if self.logger:
-                    self.logger.error(f"Failed to execute {software_name}: {stderr}")
+            if return_code != 0 and self.logger:
+                self.logger.error(f"Failed to execute {software_name}: {stderr}")
 
-        except (ConfigError, Exception) as e:
-            if self.logger:
-                self.logger.error(f"Failed to execute {software_name}: {e}")
+        except ConfigError as e:
+            self.logger.error(f"Failed to execute {software_name}: {e}")
             raise

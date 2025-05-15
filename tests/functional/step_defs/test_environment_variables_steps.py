@@ -162,12 +162,12 @@ def run_command(env_var_context, command):
     # Mock for production environment
     with env_var_context["mock_load_config_paths"]:
         # Create a production environment object
+        # Mock activation for the test - similar to what's done in
+        # production_env_activated
         env = ProductionEnvironment(
-            env_var_context["prod_name"], env_var_context["logger"]
+            env_var_context["prod_name"]
         )
-
-        # Mock l'activation pour le test - similaire à ce qui est fait dans production_env_activated
-        # Définir manuellement les variables d'environnement pour le test
+        # Manually set environment variables for the test
         env_var_context["env_variables"] = {
             "PROD": env_var_context["prod_name"],
             "PROD_ROOT": "/s/prods/dlt",
@@ -180,7 +180,7 @@ def run_command(env_var_context, command):
             "HOUDINI_VERSION": "19.5",
             "NUKE-13_VERSION": "13.2",
             "STUDIO_ROOT": "/s/studio",
-            "TOOLS_ROOT": "/s/studio/tools"
+            "TOOLS_ROOT": "/s/studio/tools",
         }
 
         # Set these variables in the environment manager for consistency
@@ -194,10 +194,10 @@ def production_env_activated(env_var_context):
     with env_var_context["mock_load_config_paths"]:
         # Create the environment
         env = ProductionEnvironment(
-            env_var_context["prod_name"], env_var_context["logger"]
+            env_var_context["prod_name"]
         )
 
-        # Définir manuellement les variables d'environnement pour le test
+        # Manually set environment variables for the test
         env_var_context["env_variables"] = {
             "PROD": env_var_context["prod_name"],
             "PROD_ROOT": "/s/prods/dlt",
@@ -210,7 +210,7 @@ def production_env_activated(env_var_context):
             "HOUDINI_VERSION": "19.5",
             "NUKE-13_VERSION": "13.2",
             "STUDIO_ROOT": "/s/studio",
-            "TOOLS_ROOT": "/s/studio/tools"
+            "TOOLS_ROOT": "/s/studio/tools",
         }
 
         # Set these variables in the environment manager for consistency
@@ -224,12 +224,10 @@ def production_env_activated(env_var_context):
 @when('I exit the environment with the "exit" command')
 def exit_environment(env_var_context):
     """Simulate exiting the environment."""
-    # Get the original environment variables
-    original_env = env_var_context["original_env"].copy()
-
-    # Reset the environment to original state
-    os.environ.clear()
-    os.environ.update(original_env)
+    # Simply manually remove all environment variables that were set
+    for var_name in list(env_var_context["env_variables"].keys()):
+        if var_name in os.environ:
+            del os.environ[var_name]
 
 
 @then("environment variables should be set from the pipeline configuration")

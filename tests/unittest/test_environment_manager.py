@@ -1,49 +1,47 @@
 """
-Tests unitaires pour la classe EnvironmentManager.
+Unit tests for the EnvironmentManager class.
 """
 
 import os
 import platform
 import tempfile
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
 from src.environment_manager import EnvironmentManager
-from src.logger import Logger
 
 
 @pytest.fixture
 def env_manager():
     """
-    Fixture pour créer un gestionnaire d'environnement.
+    Fixture to create an environment manager.
 
     Returns:
         EnvironmentManager
     """
-    logger = MagicMock(spec=Logger)
-    return EnvironmentManager(logger)
+    return EnvironmentManager()
 
 
 def test_generate_powershell_script(env_manager):
     """
-    Test de génération d'un script PowerShell.
+    Test generating a PowerShell script.
     """
-    # Configuration de l'environnement de test
+    # Configure the test environment
     with patch("platform.system", return_value="Windows"):
-        # Définir des variables d'environnement
+        # Set environment variables
         env_manager.set_environment_variables(
             {"PROD": "dlt", "PROD_ROOT": "/s/prods/dlt", "PROD_TYPE": "vfx"}
         )
 
-        # Générer le script
+        # Generate the script
         script_path = env_manager.generate_shell_script("dlt")
 
-        # Vérifier que le fichier existe
+        # Verify that the file exists
         assert os.path.exists(script_path)
         assert script_path.endswith(".ps1")
 
-        # Vérifier le contenu du script
+        # Verify the script content
         with open(script_path, "r") as f:
             content = f.read()
             assert "$env:PROD = 'dlt'" in content
@@ -54,23 +52,23 @@ def test_generate_powershell_script(env_manager):
 
 def test_generate_bash_script(env_manager):
     """
-    Test de génération d'un script Bash.
+    Test generating a Bash script.
     """
-    # Configuration de l'environnement de test
+    # Configure the test environment
     with patch("platform.system", return_value="Linux"):
-        # Définir des variables d'environnement
+        # Set environment variables
         env_manager.set_environment_variables(
             {"PROD": "dlt", "PROD_ROOT": "/s/prods/dlt", "PROD_TYPE": "vfx"}
         )
 
-        # Générer le script
+        # Generate the script
         script_path = env_manager.generate_shell_script("dlt")
 
-        # Vérifier que le fichier existe
+        # Verify that the file exists
         assert os.path.exists(script_path)
         assert script_path.endswith(".sh")
 
-        # Vérifier le contenu du script
+        # Verify the script content
         with open(script_path, "r") as f:
             content = f.read()
             assert "export PROD='dlt'" in content
@@ -81,11 +79,11 @@ def test_generate_bash_script(env_manager):
 
 def test_apply_environment_to_parent_shell(env_manager):
     """
-    Test de l'application des variables d'environnement au shell parent.
-    Ceci est principalement un test de la fonction plutôt que de son effet,
-    car il n'est pas réellement possible de modifier l'environnement du shell parent.
+    Test applying environment variables to the parent shell.
+    This is primarily a test of the function rather than its effect,
+    as it's not actually possible to modify the parent shell's environment.
     """
-    # Créer un fichier temporaire pour simuler un script shell
+    # Create a temporary file to simulate a shell script
     with tempfile.NamedTemporaryFile(
         mode="w",
         delete=False,
@@ -95,14 +93,14 @@ def test_apply_environment_to_parent_shell(env_manager):
         tmp_path = tmp.name
 
     try:
-        # Mock subprocess.run pour éviter l'exécution réelle
+        # Mock subprocess.run to avoid real execution
         with patch("subprocess.run") as mock_run:
-            # Appeler la méthode
+            # Call the method
             env_manager.apply_environment_to_parent_shell(tmp_path)
 
-            # Vérifier que subprocess.run a été appelé
+            # Verify that subprocess.run was called
             mock_run.assert_called_once()
     finally:
-        # Nettoyer le fichier temporaire
+        # Clean up the temporary file
         if os.path.exists(tmp_path):
             os.unlink(tmp_path)

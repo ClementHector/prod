@@ -67,10 +67,8 @@ class SoftwareCLI:
         if args is None:
             args = sys.argv[1:]
 
-        # Parse arguments
         parsed_args = self.parser.parse_args(args)
 
-        # Get the production name from environment
         prod_name = os.environ.get("PROD")
 
         if not prod_name:
@@ -79,16 +77,13 @@ class SoftwareCLI:
             print(error_msg)
             return 1
 
-        # Initialize logger
         log_level = "DEBUG" if parsed_args.verbose else "INFO"
         self.logger = Logger(log_level)
 
-        # Initialize error handler
-        self.error_handler = ErrorHandler(self.logger)
+        self.error_handler = ErrorHandler()
 
-        # Execute the software
         try:
-            env = ProductionEnvironment(prod_name, self.logger)
+            env = ProductionEnvironment(prod_name)
 
             additional_packages = parsed_args.packages or []
             env_only = parsed_args.env_only
@@ -99,7 +94,7 @@ class SoftwareCLI:
 
             return 0
 
-        except (ConfigError, RezError, Exception) as e:
+        except (ConfigError, RezError) as e:
             self.error_handler.handle_error(e)
             return 1
 
@@ -128,18 +123,14 @@ def create_software_entry_point(software_name: str) -> Callable[[], int]:
     return main
 
 
-# Create entry points for common software
-# These will be used in setup.py to create console scripts
 maya_main = create_software_entry_point("maya")
 nuke_main = create_software_entry_point("nuke")
 houdini_main = create_software_entry_point("houdini")
 
 
 if __name__ == "__main__":
-    # If directly executed, extract the software name from the script name
     script_name = os.path.basename(sys.argv[0])
     software_name = os.path.splitext(script_name)[0]
 
-    # Create and run the CLI
     cli = SoftwareCLI(software_name)
     sys.exit(cli.run())

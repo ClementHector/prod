@@ -1,10 +1,7 @@
 """
-Tests unitaires pour la classe Logger.
+Unit tests for the Logger class.
 """
 
-import os
-import tempfile
-import time
 from unittest import mock
 
 import pytest
@@ -12,20 +9,7 @@ import pytest
 from src.logger import Logger
 
 
-@pytest.fixture
-def temp_log_file():
-    """Create a temporary log file."""
-    temp_dir = tempfile.TemporaryDirectory()
-    log_file = os.path.join(temp_dir.name, "test.log")
-
-    yield log_file
-
-    # Cleanup - ignore errors as Windows may have file locks
-    try:
-        temp_dir.cleanup()
-    except PermissionError:
-        # On Windows, the file might still be locked
-        pass
+# Fixture removed as it's no longer needed since log_file parameter was removed
 
 
 def test_logger_initialization():
@@ -38,29 +22,17 @@ def test_logger_initialization():
     assert logger.logger.level == 10  # DEBUG level
 
 
-def test_logger_with_file(temp_log_file):
-    """Test logger with a log file."""
-    logger = Logger(log_level="INFO", log_file=temp_log_file)
+def test_logger_handlers():
+    """Test logger handlers configuration."""
+    logger = Logger(log_level="INFO")
 
-    # Log a message
-    test_message = "Test log message"
-    logger.info(test_message)
-
-    # Explicitly close all handlers to release the file lock
-    for handler in logger.logger.handlers:
-        handler.flush()
-        handler.close()
-
-    # Clear handlers to ensure they're not used again
-    logger.logger.handlers.clear()
-
-    # Give the OS a moment to release the file lock
-    time.sleep(0.1)
-
-    # Check that the message was written to the file
-    with open(temp_log_file, "r") as f:
-        content = f.read()
-        assert test_message in content
+    # Test that logger is properly initialized
+    assert logger.logger is not None
+    
+    # Verify that we only have a single handler (console)
+    assert len(logger.logger.handlers) == 1
+    # Verify it's not a file handler
+    assert all(not hasattr(h, 'baseFilename') for h in logger.logger.handlers)
 
 
 def test_logging_methods():
@@ -100,20 +72,4 @@ def test_set_log_level():
     assert logger.logger.level == 40  # ERROR level
 
 
-def test_get_log_file_path():
-    """Test getting a log file path."""
-    # Test with no production
-    log_path = Logger.get_log_file_path()
-    norm_log_path = os.path.normpath(log_path)
-    assert (
-        os.path.normpath(".prod/logs/prod_") in norm_log_path
-        or os.path.normpath(".prod\\logs\\prod_") in norm_log_path
-    )
-
-    # Test with production
-    log_path = Logger.get_log_file_path(production="test_prod")
-    norm_log_path = os.path.normpath(log_path)
-    assert (
-        os.path.normpath(".prod/logs/test_prod/prod_") in norm_log_path
-        or os.path.normpath(".prod\\logs\\test_prod\\prod_") in norm_log_path
-    )
+# get_log_file_path has been removed as part of the simplification

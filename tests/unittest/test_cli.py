@@ -101,7 +101,7 @@ def test_handle_enter_command_activates_environment(cli):
         result = cli._handle_enter_command(args)
 
         # Check that ProductionEnvironment was created with the production name
-        mock_prod_env.assert_called_once_with("test_prod", cli.logger)
+        mock_prod_env.assert_called_once_with("test_prod")
 
         # Check that activate was called
         mock_env.activate.assert_called_once()

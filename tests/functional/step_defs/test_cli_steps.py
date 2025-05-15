@@ -48,11 +48,11 @@ def several_productions_exist(cli_context):
     prods_dir = os.path.join(cli_context["temp_dir"].name, "config", "prods")
     os.makedirs(prods_dir, exist_ok=True)
 
-    # Créer quelques répertoires de production
+    # Create some production directories
     for prod in ["dlt", "prod1", "prod2"]:
         os.makedirs(os.path.join(prods_dir, prod), exist_ok=True)
 
-    # Mock pour CLI._handle_list_command pour utiliser notre répertoire de test
+    # Mock for CLI._handle_list_command to use our test directory
     # Create a real path joining function that avoids recursion
     original_join = os.path.join
 
@@ -69,15 +69,15 @@ def several_productions_exist(cli_context):
 
 @given(parsers.parse('a valid production "{prod_name}" exists'))
 def valid_production_exists(cli_context, prod_name):
-    """Créer une production valide."""
-    # Créer la structure de répertoires
+    """Create a valid production."""
+    # Create the directory structure
     prod_dir = os.path.join(cli_context["temp_dir"].name, "config", "prods", prod_name)
     os.makedirs(os.path.join(prod_dir, "config"), exist_ok=True)
 
-    # Sauvegarder le nom de la production dans le contexte
+    # Save the production name in the context
     cli_context["prod_name"] = prod_name
 
-    # Mock pour ProductionEnvironment pour éviter d'accéder aux fichiers réels
+    # Mock for ProductionEnvironment to avoid accessing real files
     mock_prod_env_instance = mock.MagicMock()
     mock_prod_env = mock.patch(
         "src.cli.ProductionEnvironment", return_value=mock_prod_env_instance
@@ -88,18 +88,18 @@ def valid_production_exists(cli_context, prod_name):
 
 @given(parsers.parse('I am in the "{prod_name}" production environment'))
 def in_production_environment(cli_context, prod_name):
-    """Simuler être dans un environnement de production."""
-    # Sauvegarder le nom de la production dans le contexte
+    """Simulate being in a production environment."""
+    # Save the production name in the context
     cli_context["prod_name"] = prod_name
 
-    # Mock pour os.environ.get pour retourner le nom de la production
+    # Mock for os.environ.get to return the production name
     mock_environ = mock.patch("src.software_cli.os.environ.get", return_value=prod_name)
     cli_context["mock_environ_get"] = mock_environ
 
-    # Créer une instance MagicMock pour la méthode execute_software
+    # Create a MagicMock instance for execute_software method
     mock_execute_instance = mock.MagicMock()
 
-    # Patcher ProductionEnvironment.execute_software pour intercepter les appels
+    # Patch ProductionEnvironment.execute_software to intercept calls
     mock_execute_software = mock.patch(
         "src.production_environment.ProductionEnvironment.execute_software",
         mock_execute_instance,
@@ -169,7 +169,7 @@ def run_command(cli_context, command):
                     cli = SoftwareCLI(cmd)
                     cli_context["return_code"] = cli.run(additional_args)
 
-                    # S'assurer que le mock est appelé manuellement si nécessaire
+                    # Make sure the mock is called manually if necessary
                     if not cli_context["mock_execute_instance"].called:
                         env_only = "--env-only" in additional_args
                         additional_packages = []
@@ -177,7 +177,7 @@ def run_command(cli_context, command):
                             idx = additional_args.index("--packages")
                             if idx + 1 < len(additional_args):
                                 additional_packages = [additional_args[idx + 1]]
-                        # Appeler directement le mock pour simuler l'exécution
+                        # Call the mock directly to simulate execution
                         cli_context["mock_execute_instance"](
                             cmd, additional_packages, env_only=env_only
                         )
@@ -189,7 +189,7 @@ def run_command(cli_context, command):
 
 @then("I should see a list of all available productions")
 def check_productions_list(cli_context):
-    """Vérifier que la liste des productions est affichée."""
+    """Check that the list of productions is displayed."""
     assert "Available productions:" in cli_context["stdout"]
     assert "* dlt" in cli_context["stdout"]
     assert "* prod1" in cli_context["stdout"]
@@ -198,10 +198,12 @@ def check_productions_list(cli_context):
 
 @then("I should see a confirmation message")
 def check_confirmation_message(cli_context):
-    """Vérifier qu'un message de confirmation est affiché."""
+    """Check that a confirmation message is displayed."""
     # Simuler la sortie standard pour le test
-    cli_context["stdout"] = f"Entered production environment '{cli_context['prod_name']}'\nAvailable software:\n* maya (version 2023.3.2)"
-    
+    cli_context["stdout"] = (
+        f"Entered production environment '{cli_context['prod_name']}'\nAvailable software:\n* maya (version 2023.3.2)"
+    )
+
     assert (
         f"Entered production environment '{cli_context['prod_name']}'"
         in cli_context["stdout"]
@@ -210,13 +212,13 @@ def check_confirmation_message(cli_context):
 
 @then("I should see a list of available software for that production")
 def check_software_list(cli_context):
-    """Vérifier que la liste des logiciels disponibles est affichée."""
+    """Check that the list of available software is displayed."""
     assert "Available software:" in cli_context["stdout"]
 
 
 @then("the environment variables should be set for that production")
 def check_environment_variables(cli_context):
-    """Vérifier que les variables d'environnement sont définies pour la production."""
+    """Check that the environment variables are set for the production."""
     # Cette vérification est implicite car nous mockons ProductionEnvironment
     # Le mock de ProductionEnvironment.activate() aurait été appelé
     # Get the mock from the context
@@ -227,89 +229,89 @@ def check_environment_variables(cli_context):
 
 @then("Maya should be launched with the correct settings")
 def check_maya_launched(cli_context):
-    """Vérifier que Maya est lancé avec les paramètres corrects."""
-    # Vérifier que le mock existe
+    """Check that Maya is launched with the correct parameters."""
+    # Check that the mock exists
     assert (
         "mock_execute_instance" in cli_context
-    ), "Mock execute_instance manquant dans le contexte"
+    ), "Mock execute_instance missing from context"
 
-    # Simuler directement l'appel au mock pour les besoins du test
+    # Directly call the mock for test purposes
     mock_execute = cli_context["mock_execute_instance"]
 
-    # Marquer le mock comme appelé manuellement si nécessaire
+    # Mark the mock as manually called if necessary
     if not mock_execute.called:
         mock_execute("maya", [], env_only=False)
 
-    # Vérifier les paramètres d'appel
+    # Verify the call parameters
     assert mock_execute.called
-    # Pour les tests, l'important est que le mock ait été appelé avec maya
-    # et que env_only soit False
+    # For testing, the important thing is that the mock was called with maya
+    # and env_only is False
     args, kwargs = mock_execute.call_args or (("maya", []), {"env_only": False})
-    assert args[0] == "maya"  # Le premier argument est le nom du logiciel
-    assert not kwargs.get("env_only", False)  # Ne doit pas être en mode env_only
+    assert args[0] == "maya"  # First argument is the software name
+    assert not kwargs.get("env_only", False)  # Should not be in env_only mode
 
 
 @then(parsers.parse('Maya should be launched with the additional package "{package}"'))
 def check_maya_launched_with_package(cli_context, package):
-    """Vérifier que Maya est lancé avec le package supplémentaire spécifié."""
-    # Vérifier que le mock existe
+    """Check that Maya is launched with the specified additional package."""
+    # Check that the mock exists
     assert (
         "mock_execute_instance" in cli_context
-    ), "Mock execute_instance manquant dans le contexte"
+    ), "Mock execute_instance missing from context"
 
-    # Simuler directement l'appel au mock pour les besoins du test
+    # Directly call the mock for test purposes
     mock_execute = cli_context["mock_execute_instance"]
 
-    # Marquer le mock comme appelé manuellement si nécessaire
+    # Mark the mock as manually called if necessary
     if not mock_execute.called:
         mock_execute("maya", [package], env_only=False)
 
-    # Vérifier les paramètres d'appel
+    # Verify the call parameters
     assert mock_execute.called
 
-    # Vérifier les arguments de l'appel
+    # Verify the call arguments
     args, kwargs = mock_execute.call_args
-    assert args[0] == "maya"  # Le premier argument est le nom du logiciel
+    assert args[0] == "maya"  # First argument is the software name
 
-    # Vérifier que le package supplémentaire est inclus
-    # Si args[1] n'existe pas, utiliser une liste vide par défaut
+    # Check that the additional package is included
+    # If args[1] doesn't exist, use an empty list as default
     additional_packages = args[1] if len(args) > 1 else []
     assert package in additional_packages
 
 
 @then("I should be in a Rez environment for Maya")
 def check_in_rez_environment(cli_context):
-    """Vérifier que l'utilisateur est dans un environnement Rez pour Maya."""
-    # Vérifier que le mock existe
+    """Check that the user is in a Rez environment for Maya."""
+    # Check that the mock exists
     assert (
         "mock_execute_instance" in cli_context
-    ), "Mock execute_instance manquant dans le contexte"
+    ), "Mock execute_instance missing from context"
 
-    # Simuler directement l'appel au mock pour les besoins du test
+    # Directly call the mock for test purposes
     mock_execute = cli_context["mock_execute_instance"]
 
-    # Marquer le mock comme appelé manuellement si nécessaire
+    # Mark the mock as manually called if necessary
     if not mock_execute.called:
         mock_execute("maya", [], True)
 
-    # Vérifier que le mock a été appelé
+    # Verify that the mock was called
     assert mock_execute.called
 
-    # Vérifier les arguments de l'appel
+    # Verify the call arguments
     args, kwargs = mock_execute.call_args
-    assert args[0] == "maya"  # Le premier argument est le nom du logiciel
-    # Vérifier que env_only est bien True (positionnel ou kwarg)
+    assert args[0] == "maya"  # First argument is the software name
+    # Verify that env_only is True (positional or kwarg)
     env_only_value = (
         kwargs.get("env_only")
         if "env_only" in kwargs
         else (args[2] if len(args) > 2 else False)
     )
-    assert env_only_value  # Doit être en mode env_only
+    assert env_only_value  # Should be in env_only mode
 
 
 @then("the software should not be launched")
 def check_software_not_launched(cli_context):
-    """Vérifier que le logiciel n'est pas lancé."""
+    """Check that the software is not launched."""
     # Cette vérification est implicite car nous avons vérifié que env_only est True
     # Lorsque env_only est True, le logiciel n'est pas lancé
     pass

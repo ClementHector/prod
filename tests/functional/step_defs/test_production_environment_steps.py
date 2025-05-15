@@ -1,5 +1,5 @@
 """
-Step definitions pour les tests fonctionnels de gestion des environnements de production.
+Step definitions for functional tests of production environment management.
 """
 
 import os
@@ -12,20 +12,20 @@ from pytest_bdd import given, parsers, scenarios, then, when
 from src.logger import Logger
 from src.production_environment import ProductionEnvironment
 
-# Importer tous les scénarios du fichier feature
+# Import all scenarios from the feature file
 scenarios("../features/production_environment.feature")
 
 
 @pytest.fixture
 def prod_env_context():
-    """Fixture pour le contexte des tests d'environnement de production."""
-    # Créer un répertoire temporaire
+    """Fixture for the production environment test context."""
+    # Create a temporary directory
     temp_dir = tempfile.TemporaryDirectory()
 
-    # Créer le logger
+    # Create logger
     logger = Logger()
 
-    # Contexte pour les tests
+    # Context for tests
     context = {
         "temp_dir": temp_dir,
         "logger": logger,
@@ -41,14 +41,14 @@ def prod_env_context():
 
 @given(parsers.parse('a valid production name "{prod_name}"'))
 def valid_production_name(prod_env_context, prod_name):
-    """Définir un nom de production valide."""
+    """Define a valid production name."""
     prod_env_context["prod_name"] = prod_name
 
 
 @given("studio and production configuration files exist")
 def config_files_exist(prod_env_context):
-    """Créer les fichiers de configuration studio et production."""
-    # Créer la structure de répertoires
+    """Create studio and production configuration files."""
+    # Create directory structure
     config_dir = os.path.join(prod_env_context["temp_dir"].name, "config")
     studio_dir = os.path.join(config_dir, "studio")
     prod_dir = os.path.join(
@@ -58,7 +58,7 @@ def config_files_exist(prod_env_context):
     os.makedirs(studio_dir, exist_ok=True)
     os.makedirs(prod_dir, exist_ok=True)
 
-    # Créer les fichiers de configuration studio
+    # Create studio configuration files
     with open(os.path.join(studio_dir, "software.ini"), "w") as f:
         f.write(
             """
@@ -97,7 +97,7 @@ TOOLS_ROOT=/s/studio/tools
 """
         )
 
-    # Créer les fichiers de configuration de la production
+    # Create the production configuration files
     with open(os.path.join(prod_dir, "software.ini"), "w") as f:
         f.write(
             """
@@ -143,7 +143,7 @@ DLT_SHOTS=/s/prods/dlt/shots
 """
         )
 
-    # Créer le fichier de paramètres prod
+    # Create the production settings file
     temp_dir = prod_env_context["temp_dir"].name
     with open(os.path.join(config_dir, "prod-settings.ini"), "w") as f:
         f.write(
@@ -160,7 +160,7 @@ PIPELINE_CONFIG=%s/config/studio/pipeline.ini:
     # Sauvegarder les chemins dans le contexte
     prod_env_context["config_dir"] = config_dir
 
-    # Mock pour ProductionEnvironment._load_config_paths
+    # Mock for ProductionEnvironment._load_config_paths
     prod_env_context["mock_load_config_paths"] = mock.patch(
         "src.production_environment.ProductionEnvironment._load_config_paths",
         return_value={
@@ -175,13 +175,13 @@ PIPELINE_CONFIG=%s/config/studio/pipeline.ini:
         },
     )
 
-    # Mock pour EnvironmentManager.set_environment_variables
+    # Mock for EnvironmentManager.set_environment_variables
     prod_env_context["mock_set_env_vars"] = mock.patch(
         "src.environment_manager.EnvironmentManager.set_environment_variables",
         side_effect=lambda vars: prod_env_context["env_variables"].update(vars),
     )
 
-    # Mock pour RezManager.create_alias
+    # Mock for RezManager.create_alias
     prod_env_context["mock_create_alias"] = mock.patch(
         "src.rez_manager.RezManager.create_alias",
         side_effect=lambda sw_name, sw_ver, pkgs, alias_name=None: prod_env_context[
@@ -196,12 +196,12 @@ PIPELINE_CONFIG=%s/config/studio/pipeline.ini:
         ),
     )
 
-    # Mock pour RezManager._validate_rez_installation
+    # Mock for RezManager._validate_rez_installation
     prod_env_context["mock_validate_rez"] = mock.patch(
         "src.rez_manager.RezManager._validate_rez_installation"
     )
 
-    # Mock pour EnvironmentManager.reset_environment
+    # Mock for EnvironmentManager.reset_environment
     prod_env_context["mock_reset_environment"] = mock.patch(
         "src.environment_manager.EnvironmentManager.reset_environment",
         return_value=None,
@@ -210,7 +210,7 @@ PIPELINE_CONFIG=%s/config/studio/pipeline.ini:
 
 @when("I activate the production environment")
 def activate_production_env(prod_env_context):
-    """Activer l'environnement de production."""
+    """Activate the production environment."""
     with (
         prod_env_context["mock_load_config_paths"],
         prod_env_context["mock_set_env_vars"],
@@ -218,58 +218,65 @@ def activate_production_env(prod_env_context):
         prod_env_context["mock_validate_rez"],
     ):
 
-        # Patch la méthode generate_interactive_shell_script pour éviter le problème
-        # et capturer les logiciels passés en paramètre
+        # Patch the generate_interactive_shell_script method to avoid issues
+        # and capture the software list passed as parameter
         def mock_generate_interactive_shell_script(self, prod_name, software_list=None):
-            # Stocker la liste de logiciels dans le contexte pour vérification
+            # Store the software list in the context for verification
             if software_list:
                 prod_env_context["software_list"] = software_list
             return "/tmp/mock_interactive.sh"
-            
-        # Patch la méthode source_interactive_shell pour éviter l'exécution réelle
+
+        # Patch the source_interactive_shell method to avoid real execution
         def mock_source_interactive_shell(self, script_path):
             return
-            
-        # Application des patchs
+
+        # Apply the patches
         with (
-            mock.patch("src.environment_manager.EnvironmentManager.generate_interactive_shell_script", 
-                      mock_generate_interactive_shell_script),
-            mock.patch("src.environment_manager.EnvironmentManager.source_interactive_shell",
-                      mock_source_interactive_shell),
+            mock.patch(
+                "src.environment_manager.EnvironmentManager.generate_interactive_shell_script",
+                mock_generate_interactive_shell_script,
+            ),
+            mock.patch(
+                "src.environment_manager.EnvironmentManager.source_interactive_shell",
+                mock_source_interactive_shell,
+            ),
         ):
             prod_env = ProductionEnvironment(
-                prod_env_context["prod_name"], prod_env_context["logger"]
+                prod_env_context["prod_name"]
             )
-            
-            # S'assurer que la liste des logiciels est bien définie pour les tests
+
+            # Ensure that the software list is properly defined for tests
             def mock_get_software_list():
                 software_list = [
                     {"name": "maya", "version": "2023.3.2"},
                     {"name": "nuke", "version": "12.3"},
                     {"name": "nuke-13", "version": "13.2"},
-                    {"name": "houdini", "version": "19.5"}
+                    {"name": "houdini", "version": "19.5"},
                 ]
-                # Pré-remplir les alias pour les tests avec les paquets corrects
+                # Pre-fill the aliases for tests with the correct packages
                 for sw in software_list:
-                    packages = ["vfxCore-2.5"]  # Paquet commun à tous les logiciels
-                    
-                    # Ajout des paquets spécifiques à certains logiciels
+                    packages = ["vfxCore-2.5"]  # Common package for all software
+
+                    # Add specific packages for certain software
                     if sw["name"] == "maya":
                         packages.extend(["vfxMayaTools-2.3", "mtoa-2.3", "golaem-4"])
                     elif sw["name"] == "nuke" or sw["name"] == "nuke-13":
-                        packages.extend(["vfxNukeTools-2.1", "ofxSuperResolution", "neatVideo"])
+                        packages.extend(
+                            ["vfxNukeTools-2.1", "ofxSuperResolution", "neatVideo"]
+                        )
                     elif sw["name"] == "houdini":
                         packages.extend(["vfxHoudiniTools-1.8", "redshift-3.5.14"])
-                        
-                    prod_env_context["rez_aliases"].append({
-                        "software": sw["name"],
-                        "version": sw["version"],
-                        "packages": packages,
-                        "alias": sw["name"]
-                    })
-                return software_list
-                
-            # Définir les variables d'environnement initiales
+
+                    prod_env_context["rez_aliases"].append(
+                        {
+                            "software": sw["name"],
+                            "version": sw["version"],
+                            "packages": packages,
+                            "alias": sw["name"],
+                        }
+                    )
+                return software_list  # Define initial environment variables
+
             env_vars = {
                 "PROD": prod_env_context["prod_name"],
                 "PROD_ROOT": "/s/prods/dlt",
@@ -277,23 +284,27 @@ def activate_production_env(prod_env_context):
                 "DLT_ASSETS": "/s/prods/dlt/assets",
                 "DLT_SHOTS": "/s/prods/dlt/shots",
                 "STUDIO_ROOT": "/s/studio",
-                "TOOLS_ROOT": "/s/studio/tools"
+                "TOOLS_ROOT": "/s/studio/tools",
             }
-            
-            # Ajouter les variables d'environnement
+
+            # Add environment variables
             prod_env.env_manager.set_environment_variables(env_vars)
-            
-            with mock.patch.object(prod_env, 'get_software_list', mock_get_software_list):
+
+            with mock.patch.object(
+                prod_env, "get_software_list", mock_get_software_list
+            ):
                 prod_env.activate()
 
-            # Sauvegarder l'environnement dans le contexte
+            # Save the environment in the context
             prod_env_context["prod_env"] = prod_env
-            
-            # Mettre à jour les variables d'environnement dans le contexte de test
-            # en combinant les variables définies manuellement et celles ajoutées par activate()
-            prod_env_context["env_variables"] = prod_env.env_manager.env_variables.copy()
-            
-            # S'assurer que toutes les variables nécessaires sont présentes
+
+            # Update environment variables in the test context
+            # by combining manually defined variables and those added by activate()
+            prod_env_context["env_variables"] = (
+                prod_env.env_manager.env_variables.copy()
+            )
+
+            # Ensure all necessary variables are present
             for key, value in env_vars.items():
                 if key not in prod_env_context["env_variables"]:
                     prod_env_context["env_variables"][key] = value
@@ -302,8 +313,7 @@ def activate_production_env(prod_env_context):
 @then("environment variables should be set from the pipeline configuration")
 def check_env_variables(prod_env_context):
     """
-    Vérifier que les variables d'environnement sont définies
-    à partir de la configuration.
+    Check that environment variables are set from the configuration.
     """
     assert "PROD_ROOT" in prod_env_context["env_variables"]
     assert "PROD_TYPE" in prod_env_context["env_variables"]
@@ -320,8 +330,7 @@ def check_env_variables(prod_env_context):
 @then("the PROD environment variable should be set to the production name")
 def check_prod_env_var(prod_env_context):
     """
-    Vérifier que la variable d'environnement PROD est définie
-    avec le nom de production.
+    Check that the PROD environment variable is set to the production name.
     """
     assert "PROD" in prod_env_context["env_variables"]
     assert prod_env_context["env_variables"]["PROD"] == prod_env_context["prod_name"]
@@ -329,7 +338,7 @@ def check_prod_env_var(prod_env_context):
 
 @then("Rez aliases should be created for all configured software")
 def check_rez_aliases_created(prod_env_context):
-    """Vérifier que des alias Rez sont créés pour tous les logiciels configurés."""
+    """Check that Rez aliases are created for all configured software."""
     software_names = {alias["software"] for alias in prod_env_context["rez_aliases"]}
     assert "maya" in software_names
     assert "nuke" in software_names
@@ -339,7 +348,7 @@ def check_rez_aliases_created(prod_env_context):
 
 @then("each alias should include the correct packages")
 def check_alias_packages(prod_env_context):
-    """Vérifier que chaque alias inclut les packages corrects."""
+    """Check that each alias includes the correct packages."""
     for alias in prod_env_context["rez_aliases"]:
         if alias["software"] == "maya":
             assert "vfxCore-2.5" in alias["packages"]  # Common package
@@ -357,8 +366,7 @@ def check_alias_packages(prod_env_context):
 @then("I should get a list of all configured software with their versions")
 def check_software_list(prod_env_context):
     """
-    Vérifier que la liste des logiciels configurés avec leurs versions
-    est correcte.
+    Check that the list of configured software with their versions is correct.
     """
     with (
         prod_env_context["mock_load_config_paths"],
@@ -367,20 +375,20 @@ def check_software_list(prod_env_context):
 
         if "prod_env" not in prod_env_context:
             prod_env = ProductionEnvironment(
-                prod_env_context["prod_name"], prod_env_context["logger"]
+                prod_env_context["prod_name"]
             )
             prod_env_context["prod_env"] = prod_env
 
         software_list = prod_env_context["prod_env"].get_software_list()
 
-        # Vérifier que tous les logiciels sont dans la liste
+        # Check that all software is in the list
         software_dict = {sw["name"]: sw["version"] for sw in software_list}
         assert "maya" in software_dict
         assert "nuke" in software_dict
         assert "nuke-13" in software_dict
         assert "houdini" in software_dict
 
-        # Vérifier les versions
+        # Check the versions
         assert software_dict["maya"] == "2023.3.2"
         assert software_dict["nuke"] == "12.3"
         assert software_dict["nuke-13"] == "13.2"
@@ -398,38 +406,38 @@ def production_env_activated(prod_env_context):
     ):
 
         prod_env = ProductionEnvironment(
-            prod_env_context["prod_name"], prod_env_context["logger"]
+            prod_env_context["prod_name"]
         )
         prod_env.activate()
 
-        # Sauvegarder l'environnement dans le contexte
+        # Save the environment in the context
         prod_env_context["prod_env"] = prod_env
 
 
 @when("I execute Maya with additional packages")
 def execute_maya_with_packages(prod_env_context):
-    """Exécuter Maya avec des packages supplémentaires."""
-    # Mock pour execute_with_rez
+    """Execute Maya with additional packages."""
+    # Mock for execute_with_rez
     with mock.patch("src.rez_manager.RezManager.execute_with_rez") as mock_execute:
         mock_execute.return_value = (0, "", "")
 
         additional_packages = ["dev-package-1", "dev-package-2"]
         prod_env_context["prod_env"].execute_software("maya", additional_packages)
 
-        # Sauvegarder les arguments dans le contexte
+        # Save arguments in context
         prod_env_context["execute_args"] = mock_execute.call_args[0]
         prod_env_context["execute_kwargs"] = mock_execute.call_args[1]
 
 
 @then("Maya should be launched with the additional packages")
 def check_maya_launched_with_packages(prod_env_context):
-    """Vérifier que Maya est lancé avec les packages supplémentaires."""
-    # Vérifier que execute_with_rez a été appelé avec les bons arguments
+    """Check that Maya is launched with the additional packages."""
+    # Check that execute_with_rez was called with the correct arguments
     args = prod_env_context["execute_args"]
     assert args[0] == "maya"  # software_name
     assert args[1] == "2023.3.2"  # version
 
-    # Vérifier que les packages supplémentaires sont inclus
+    # Check that the additional packages are included
     assert "dev-package-1" in args[2]  # packages
     assert "dev-package-2" in args[2]  # packages
 
@@ -475,7 +483,7 @@ def create_interactive_shell(prod_env_context):
             prod_env_context["temp_dir"].name,
             f"mock_interactive_{prod_env_context['prod_name']}.ps1",
         )
-        
+
         # Create a mock PowerShell script file
         with open(script_path, "w") as f:
             f.write("# Generated by Prod CLI\n")
@@ -495,14 +503,14 @@ def create_interactive_shell(prod_env_context):
             prod_env_context["temp_dir"].name,
             f"mock_interactive_{prod_env_context['prod_name']}.sh",
         )
-        
+
         # Create a mock Bash script file
         with open(script_path, "w") as f:
             f.write("#!/bin/bash\n")
             f.write("# Mock interactive shell script\n")
             f.write('export PS1="[PROD:test_prod] \\w> "\n')
             f.write('function exit() { echo "Exited production environment"; }\n')
-        
+
         # Make the script executable for Unix
         os.chmod(script_path, 0o755)
 
@@ -524,10 +532,8 @@ def check_custom_prompt(prod_env_context):
 
     # Check for prompt definition
     if os.name == "nt":  # Windows
-        # Assouplir la recherche pour être plus tolérant aux variations de formatage
-        assert (
-            "prompt" in content.lower()
-        ), "No prompt function in PowerShell script"
+        # Make the search more flexible to be more tolerant of formatting variations
+        assert "prompt" in content.lower(), "No prompt function in PowerShell script"
         assert (
             "prod" in content.lower()
         ), f"Production name indicator not in prompt: {content}"

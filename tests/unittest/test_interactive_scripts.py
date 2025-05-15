@@ -1,51 +1,50 @@
 """
-Tests unitaires pour les fonctions interactives de EnvironmentManager.
+Unit tests for the interactive functions of EnvironmentManager.
 """
 
 import os
-import platform
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
 from src.environment_manager import EnvironmentManager
-from src.logger import Logger
 
 
 @pytest.fixture
 def env_manager():
     """
-    Fixture pour créer un gestionnaire d'environnement.
+    Fixture to create an environment manager.
 
     Returns:
         EnvironmentManager
     """
-    logger = MagicMock(spec=Logger)
-    return EnvironmentManager(logger)
+    return EnvironmentManager()
 
 
 def test_generate_interactive_shell_script_with_software_list(env_manager):
     """
-    Test de génération d'un script interactif avec une liste de logiciels fournie directement.
+    Test the generation of an interactive script with a directly provided software list.
     """
-    # Configuration de l'environnement de test
+    # Configure the test environment
     with patch("platform.system", return_value="Windows"):
-        # Définir des variables d'environnement
+        # Set environment variables
         env_manager.set_environment_variables(
             {"PROD": "dlt", "PROD_ROOT": "/s/prods/dlt", "PROD_TYPE": "vfx"}
         )
 
-        # Préparer une liste de logiciels
+        # Prepare a software list
         software_list = ["maya:2024", "houdini:20.0", "nuke:14.0"]
 
-        # Générer le script
-        script_path = env_manager.generate_interactive_shell_script("dlt", software_list)
+        # Generate the script
+        script_path = env_manager.generate_interactive_shell_script(
+            "dlt", software_list
+        )
 
-        # Vérifier que le fichier existe
+        # Verify that the file exists
         assert os.path.exists(script_path)
-        assert script_path.endswith(".ps1")  # PowerShell sur Windows
+        assert script_path.endswith(".ps1")  # PowerShell on Windows
 
-        # Vérifier le contenu du script
+        # Verify the script content
         with open(script_path, "r") as f:
             content = f.read()
             assert "$env:PROD = 'dlt'" in content
@@ -59,16 +58,18 @@ def test_generate_interactive_shell_script_with_software_list(env_manager):
             assert "* houdini (version 20.0)" in content
             assert "* nuke (version 14.0)" in content
 
-    # Maintenant testons avec Linux
+    # Now test with Linux
     with patch("platform.system", return_value="Linux"):
-        # Générer le script
-        script_path = env_manager.generate_interactive_shell_script("dlt", software_list)
+        # Generate the script
+        script_path = env_manager.generate_interactive_shell_script(
+            "dlt", software_list
+        )
 
-        # Vérifier que le fichier existe
+        # Verify that the file exists
         assert os.path.exists(script_path)
-        assert script_path.endswith(".sh")  # Bash sur Linux
+        assert script_path.endswith(".sh")  # Bash on Linux
 
-        # Vérifier le contenu du script
+        # Verify the script content
         with open(script_path, "r") as f:
             content = f.read()
             assert "export PROD='dlt'" in content

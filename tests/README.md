@@ -59,22 +59,6 @@ pytest tests/unittest/test_config_manager.py
 pytest -k "configuration"
 ```
 
-### Utiliser le script run_tests.py
-
-```bash
-# Exécuter tous les tests
-python run_tests.py
-
-# Exécuter uniquement les tests unitaires
-python run_tests.py tests/unittest
-
-# Exécuter uniquement les tests fonctionnels
-python run_tests.py tests/functional
-
-# Passer des arguments à pytest
-python run_tests.py -xvs
-```
-
 ## Tests fonctionnels avec pytest-bdd
 
 Les tests fonctionnels utilisent pytest-bdd pour définir des scénarios de test en langage Gherkin. Chaque scénario est défini dans un fichier `.feature` et les implémentations de steps correspondantes sont dans les fichiers `test_*_steps.py`.
@@ -100,4 +84,4 @@ Les tests fonctionnels utilisent pytest-bdd pour définir des scénarios de test
 - Les noms de fichiers de test commencent par `test_`
 - Les noms de fonctions de test commencent par `test_`
 - Utilisez `assert` pour les vérifications dans les tests
-- Utilisez des fixtures pour la configuration et le nettoyage 
+- Utilisez des fixtures pour la configuration et le nettoyage

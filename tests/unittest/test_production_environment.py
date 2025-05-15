@@ -1,5 +1,5 @@
 """
-Tests unitaires pour la classe ProductionEnvironment.
+Unit tests for the ProductionEnvironment class.
 """
 
 import os
@@ -58,7 +58,7 @@ PIPELINE_CONFIG=/path/to/studio/pipeline.ini:/path/to/prod/{PROD_NAME}/config/pi
     # Mock config loading to use our test file
     with patch("os.path.join", return_value=settings_path):
         with patch("os.path.exists", return_value=True):
-            prod_env = ProductionEnvironment("test_prod", logger)
+            prod_env = ProductionEnvironment("test_prod")
 
             # Access the private method directly for testing
             config_paths = prod_env.config_paths
@@ -98,7 +98,7 @@ PIPELINE_CONFIG=C:\\path\\to\\studio\\pipeline.ini;C:\\path\\to\\prod\\{PROD_NAM
     # Mock config loading to use our test file
     with patch("os.path.join", return_value=settings_path):
         with patch("os.path.exists", return_value=True):
-            prod_env = ProductionEnvironment("test_prod", logger)
+            prod_env = ProductionEnvironment("test_prod")
 
             # Access the private method directly for testing
             config_paths = prod_env.config_paths
@@ -138,7 +138,7 @@ PIPELINE_CONFIG=C:\\path\\to\\studio\\pipeline.ini:C:\\path\\to\\prod\\{PROD_NAM
     # Mock config loading to use our test file
     with patch("os.path.join", return_value=settings_path):
         with patch("os.path.exists", return_value=True):
-            prod_env = ProductionEnvironment("test_prod", logger)
+            prod_env = ProductionEnvironment("test_prod")
 
             # Access the private method directly for testing
             config_paths = prod_env.config_paths
@@ -178,7 +178,7 @@ PIPELINE_CONFIG=C:\\path\\to\\studio\\pipeline.ini;/unix/path/pipeline.ini:/anot
     # Mock config loading to use our test file
     with patch("os.path.join", return_value=settings_path):
         with patch("os.path.exists", return_value=True):
-            prod_env = ProductionEnvironment("test_prod", logger)
+            prod_env = ProductionEnvironment("test_prod")
 
             # Access the private method directly for testing
             config_paths = prod_env.config_paths
@@ -220,7 +220,7 @@ PIPELINE_CONFIG=C:\\path\\to\\pipeline.ini
     # Mock config loading to use our test file
     with patch("os.path.join", return_value=settings_path):
         with patch("os.path.exists", return_value=True):
-            prod_env = ProductionEnvironment("test_prod", logger)
+            prod_env = ProductionEnvironment("test_prod")
 
             # Access the private method directly for testing
             config_paths = prod_env.config_paths

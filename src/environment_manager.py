@@ -8,22 +8,19 @@ import subprocess
 import tempfile
 from typing import Dict, List, Optional
 
-from src.logger import Logger
-
+from src.logger import get_logger
 
 class EnvironmentManager:
     """
     Manages environment variables for production environments.
     """
 
-    def __init__(self, logger: Optional[Logger] = None):
+    def __init__(self):
         """
         Initializes the environment manager.
 
-        Args:
-            logger: Logger instance to use for logging
         """
-        self.logger = logger
+        self.logger = get_logger()
         self.system = platform.system()
         self.original_env = os.environ.copy()
         self.current_env = os.environ.copy()
@@ -41,8 +38,7 @@ class EnvironmentManager:
 
         for key, value in variables.items():
             self._set_environment_variable(key, value)
-            if self.logger:
-                self.logger.debug(f"Set environment variable: {key}={value}")
+            self.logger.debug(f"Set environment variable: {key}={value}")
 
     def _set_environment_variable(self, key: str, value: str) -> None:
         """
@@ -89,8 +85,7 @@ class EnvironmentManager:
 
             # Set the new path
             self._set_environment_variable(key, new_path)
-            if self.logger:
-                self.logger.debug(f"Set path variable: {key}={new_path}")
+            self.logger.debug(f"Set path variable: {key}={new_path}")
 
     def _format_paths(self, paths: List[str]) -> List[str]:
         """
@@ -103,7 +98,7 @@ class EnvironmentManager:
             List of formatted paths
         """
         formatted_paths = []
-        # Vérifier le système d'exploitation au moment de l'appel
+        # Check the operating system at call time
         current_system = platform.system()
 
         for path in paths:
@@ -125,7 +120,7 @@ class EnvironmentManager:
         Returns:
             Path separator
         """
-        # Vérifier le système d'exploitation au moment de l'appel
+        # Check the operating system at call time
         current_system = platform.system()
         return ";" if current_system == "Windows" else ":"
 
@@ -145,18 +140,22 @@ class EnvironmentManager:
         """
         Resets the environment to its original state.
         """
-        # Clear the current environment
-        os.environ.clear()
+        # Remove all environment variables that were set by this manager
+        for key in list(self.env_variables.keys()):
+            if key in os.environ:
+                del os.environ[key]
 
-        # Set the original environment variables
+        # Restore original environment variables that were modified
         for key, value in self.original_env.items():
-            os.environ[key] = value
+            if key not in os.environ and key in self.env_variables:
+                os.environ[key] = value
 
         # Update the current environment
-        self.current_env = self.original_env.copy()
+        self.current_env = os.environ.copy()
+        # Clear the stored environment variables
+        self.env_variables.clear()
 
-        if self.logger:
-            self.logger.debug("Reset environment to original state")
+        self.logger.debug("Reset environment to original state")
 
     def generate_shell_script(self, prod_name: str) -> str:
         """
@@ -168,8 +167,8 @@ class EnvironmentManager:
         Returns:
             Path to the generated script
         """
-        # Vérifier le système d'exploitation au moment de l'appel
-        # au lieu d'utiliser self.system qui est défini à l'initialisation
+        # Check the operating system at call time
+        # instead of using self.system which is defined at initialization
         current_system = platform.system()
         if current_system == "Windows":
             return self._generate_powershell_script(prod_name)
@@ -203,16 +202,16 @@ class EnvironmentManager:
                 f.write(f"    $env:{key} = '{value}'\n")
 
             f.write(
-                "    Write-Host \"Environment configured for production '{0}'\" " +
-                "-f $env:PROD -ForegroundColor Green\n")
+                "    Write-Host \"Environment configured for production '{0}'\""
+                "-f $env:PROD -ForegroundColor Green\n"
+            )
             f.write("}\n\n")
 
             # Call the function
             f.write("# Call the function\n")
             f.write("Set-ProdEnvironment\n")
 
-        if self.logger:
-            self.logger.debug(f"Generated PowerShell script: {script_path}")
+        self.logger.debug(f"Generated PowerShell script: {script_path}")
 
         return script_path
 
@@ -241,14 +240,13 @@ class EnvironmentManager:
                 f.write(f"export {key}='{value}'\n")
 
             f.write(
-                "\nprintf \"Environment configured for production '%s'\\n\" \"$PROD\"\n"
+                '\nprintf "Environment configured for production \'%s\'\\n" "$PROD"\n'
             )
 
         # Make the script executable
         os.chmod(script_path, 0o755)
 
-        if self.logger:
-            self.logger.debug(f"Generated Bash script: {script_path}")
+        self.logger.debug(f"Generated Bash script: {script_path}")
 
         return script_path
 
@@ -262,7 +260,7 @@ class EnvironmentManager:
             script_path: Path to the shell script
         """
         try:
-            # Vérifier le système d'exploitation au moment de l'appel
+            # Check the operating system at call time
             current_system = platform.system()
 
             if current_system == "Windows":
@@ -274,14 +272,13 @@ class EnvironmentManager:
                 command = f"source '{script_path}'"
                 subprocess.run(["bash", "-c", command], check=True)
 
-            if self.logger:
-                self.logger.debug(f"Executed environment script: {script_path}")
+            self.logger.debug(f"Executed environment script: {script_path}")
         except subprocess.CalledProcessError as e:
-            if self.logger:
-                self.logger.error(f"Failed to execute environment script: {e}")
+            self.logger.error(f"Failed to execute environment script: {e}")
 
     def generate_interactive_shell_script(
-            self, prod_name: str, software_list: Optional[List[str]] = None) -> str:
+        self, prod_name: str, software_list: Optional[List[str]] = None
+    ) -> str:
         """
         Generates an interactive shell script that sets environment variables
         and defines an 'exit' command to properly exit the production environment.
@@ -293,15 +290,18 @@ class EnvironmentManager:
         Returns:
             Path to the generated script
         """
-        # Vérifier le système d'exploitation au moment de l'appel
+        # Check the operating system at call time
         current_system = platform.system()
         if current_system == "Windows":
-            return self._generate_interactive_powershell_script(prod_name, software_list)
+            return self._generate_interactive_powershell_script(
+                prod_name, software_list
+            )
         else:
             return self._generate_interactive_bash_script(prod_name, software_list)
 
     def _generate_interactive_powershell_script(
-            self, prod_name: str, software_list: Optional[List[str]] = None) -> str:
+        self, prod_name: str, software_list: Optional[List[str]] = None
+    ) -> str:
         """
         Generates an interactive PowerShell script with custom exit function.
 
@@ -367,9 +367,7 @@ class EnvironmentManager:
                     # Create a PowerShell function for each software
                     f.write(f"function global:{software_name} {{\n")
                     f.write("    param(\n")
-                    f.write(
-                        "        [Parameter(ValueFromRemainingArguments=$true)]\n"
-                    )
+                    f.write("        [Parameter(ValueFromRemainingArguments=$true)]\n")
                     f.write("        [string[]]$Params\n")
                     f.write("    )\n")
 
@@ -397,20 +395,28 @@ class EnvironmentManager:
                     f.write(usage_msg)
                     launch_msg = (
                         f'    Write-Host "Launches {software_name} version {version} with Rez" '
-                        f'-ForegroundColor Cyan\n')
+                        f"-ForegroundColor Cyan\n"
+                    )
                     f.write(launch_msg)
                     package_msg = (
                         f'    Write-Host "For package options, use: {software_name} '
-                        f'--packages pkg1 pkg2" -ForegroundColor Cyan\n')
+                        f'--packages pkg1 pkg2" -ForegroundColor Cyan\n'
+                    )
                     f.write(package_msg)
                     f.write("}\n\n")
 
             # Display welcome message
             f.write("$prodName = Get-EnvSafe 'PROD' 'unknown'\n")
-            f.write("Write-Host \"==========================================\" -ForegroundColor Cyan\n")
-            f.write("Write-Host \"PRODUCTION ENVIRONMENT ACTIVATED: \" -NoNewline -ForegroundColor Cyan\n")
-            f.write("Write-Host \"$prodName\" -ForegroundColor Green\n")
-            f.write("Write-Host \"==========================================\" -ForegroundColor Cyan\n")
+            f.write(
+                'Write-Host "==========================================" -ForegroundColor Cyan\n'
+            )
+            f.write(
+                'Write-Host "PRODUCTION ENVIRONMENT ACTIVATED: " -NoNewline -ForegroundColor Cyan\n'
+            )
+            f.write('Write-Host "$prodName" -ForegroundColor Green\n')
+            f.write(
+                'Write-Host "==========================================" -ForegroundColor Cyan\n'
+            )
             exit_msg = "Write-Host \"Type 'exit' to leave the production environment`n\" -ForegroundColor DarkGray\n\n"
             f.write(exit_msg)
 
@@ -423,22 +429,22 @@ class EnvironmentManager:
                     if ":" in item:
                         software_name, version = item.split(":", 1)
                         f.write(
-                            f'Write-Host "  * {software_name}" -NoNewline -ForegroundColor White\n')
-                        f.write(
-                            f'Write-Host " (version {version})" -ForegroundColor DarkGray\n')
+                            f'Write-Host "* {software_name} (version {version})" -ForegroundColor White\n'
+                        )
                     else:
-                        f.write(f'Write-Host "  * {item}" -ForegroundColor White\n')
+                        f.write(f'Write-Host "* {item}" -ForegroundColor White\n')
             else:
                 f.write(
-                    'Write-Host "No software configured for this production" -ForegroundColor Yellow\n')
+                    'Write-Host "No software configured for this production" -ForegroundColor Yellow\n'
+                )
 
-        if self.logger:
-            self.logger.debug(f"Generated interactive PowerShell script: {script_path}")
+        self.logger.debug(f"Generated interactive PowerShell script: {script_path}")
 
         return script_path
 
     def _generate_interactive_bash_script(
-            self, prod_name: str, software_list: Optional[List[str]] = None) -> str:
+        self, prod_name: str, software_list: Optional[List[str]] = None
+    ) -> str:
         """
         Generates an interactive Bash script with custom exit function.
 
@@ -468,7 +474,9 @@ class EnvironmentManager:
             # Custom exit function to exit the production environment
             f.write("# Override exit command to exit production environment\n")
             f.write("function exit() {\n")
-            f.write("    printf \"\\033[32mExited production environment '%s'\\033[0m\\n\" \"$PROD\"\n")
+            f.write(
+                '    printf "\\033[32mExited production environment \'%s\'\\033[0m\\n" "$PROD"\n'
+            )
             f.write('    original_exit "$@"\n')
             f.write("}\n\n")
 
@@ -510,12 +518,13 @@ class EnvironmentManager:
 
             # Display welcome message
             f.write("echo\n")
-            f.write("printf \"==========================================\\n\"\n")
-            f.write("printf \"PRODUCTION ENVIRONMENT ACTIVATED: %s\\n\" \"$PROD\"\n")
-            f.write("printf \"==========================================\\n\"\n")
+            f.write('printf "==========================================\\n"\n')
+            f.write('printf "PRODUCTION ENVIRONMENT ACTIVATED: %s\\n" "$PROD"\n')
+            f.write('printf "==========================================\\n"\n')
             f.write("echo\n")
-            f.write("printf \"Type 'exit' to leave the production environment\\n\\n\"\n")
-
+            f.write(
+                "printf \"Type 'exit' to leave the production environment\\n\\n\"\n"
+            )
 
             # List available software
             f.write('printf "Available Software Tools:\\n"\n')
@@ -525,7 +534,9 @@ class EnvironmentManager:
                 for item in software_items:
                     if ":" in item:
                         software_name, version = item.split(":", 1)
-                        f.write(f'printf "  * {software_name} (version {version})\\n"\n')
+                        f.write(
+                            f'printf "  * {software_name} (version {version})\\n"\n'
+                        )
                     else:
                         f.write(f'printf "  * {item}\\n"\n')
             else:
@@ -534,8 +545,7 @@ class EnvironmentManager:
         # Make the script executable
         os.chmod(script_path, 0o755)
 
-        if self.logger:
-            self.logger.debug(f"Generated interactive Bash script: {script_path}")
+        self.logger.debug(f"Generated interactive Bash script: {script_path}")
 
         return script_path
 
@@ -548,12 +558,11 @@ class EnvironmentManager:
             script_path: Path to the interactive shell script
         """
         try:
-            if self.logger:
-                self.logger.debug(
-                    f"Starting interactive shell with script: {script_path}"
-                )
+            self.logger.debug(
+                f"Starting interactive shell with script: {script_path}"
+            )
 
-            # Vérifier le système d'exploitation au moment de l'appel
+            # Check the operating system at call time
             current_system = platform.system()
             if current_system == "Windows":
                 # In PowerShell, use -File to execute the script in a new interactive shell
@@ -568,67 +577,6 @@ class EnvironmentManager:
                 # In Bash, source the script in a new interactive shell
                 os.system(f'bash --rcfile "{script_path}"')
 
-            if self.logger:
-                self.logger.debug("Interactive shell exited")
+            self.logger.debug("Interactive shell exited")
         except Exception as e:
-            if self.logger:
-                self.logger.error(f"Failed to source interactive shell script: {e}")
-
-    def auto_apply_environment_variables(self) -> None:
-        """
-        Automatically apply all environment variables directly to the current process.
-        This doesn't require sourcing a script, but the variables won't be available
-        to the parent shell. Useful for interactive CLI tools where variables
-        are only needed for the duration of the command.
-        """
-        # Since the variables are already set in the _set_environment_variable method
-        # when set_environment_variables is called, we don't need to do anything here.
-        # This method exists for clarity and to match the expected behavior from
-        # the user's perspective.
-
-        # Store software information in environment variable for the interactive shell
-        software_list = []
-
-        # Look for common software version patterns in environment variables
-        for software_name, software_info in self.env_variables.items():
-            if software_name.endswith("_VERSION"):
-                # Extract base software name without _VERSION suffix
-                software_base = software_name.replace("_VERSION", "")
-                version = software_info
-                software_list.append(f"{software_base}:{version}")
-
-        # If we found no software with _VERSION pattern, try to extract from other
-        # common patterns
-        if not software_list:
-            # Look for software-specific environment variables
-            # Common software names that might be in the environment
-            common_software = ["MAYA", "NUKE", "HOUDINI", "BLENDER", "MARI", "KATANA"]
-            for sw in common_software:
-                # Check if there's a version environment variable
-                if f"{sw}_VERSION" in self.env_variables:
-                    software_list.append(
-                        f"{sw.lower()}:{self.env_variables[f'{sw}_VERSION']}"
-                    )
-
-        # If we have software information from environment variables, set it
-        if software_list:
-            self._set_environment_variable("SOFTWARE_LIST", ";".join(software_list))
-            if self.logger:
-                self.logger.debug(f"Setting SOFTWARE_LIST: {';'.join(software_list)}")
-        else:
-            # If we still have no software info, use the PROD environment variable to create a dummy list
-            # This is just to ensure something appears in the interactive shell
-            prod_name = self.env_variables.get("PROD", "unknown")
-            self._set_environment_variable(
-                "SOFTWARE_LIST", f"software_for_{prod_name}:1.0"
-            )
-            if self.logger:
-                self.logger.debug(f"Setting default SOFTWARE_LIST for {prod_name}")
-
-        if self.logger:
-            self.logger.debug(
-                "Environment variables are directly applied to the current process."
-            )
-            self.logger.debug(
-                f"Environment variables: {', '.join(f'{k}={v}' for k, v in self.env_variables.items())}"
-            )
+            self.logger.error(f"Failed to source interactive shell script: {e}")

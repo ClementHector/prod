@@ -35,7 +35,6 @@ class ConfigManager:
         Validates the loaded configuration.
         Ensures all required sections and keys exist.
         """
-        # TODO: Add specific validation logic based on expected configuration
         pass
 
     def merge_configs(self, configs: List[str]) -> None:
@@ -51,7 +50,6 @@ class ConfigManager:
             if os.path.exists(config):
                 self.config_parser.read(config)
             else:
-                # Just log a warning but continue
                 print(f"Warning: Config file not found: {config}")
 
     def load_override_config(self, config_path: str) -> None:
@@ -118,11 +116,9 @@ class ConfigManager:
         """
         result = {}
 
-        # Add base config values
         if self.config_parser.has_section(section):
             result.update(dict(self.config_parser[section]))
 
-        # Override with override config values
         if self.override_config.has_section(section):
             result.update(dict(self.override_config[section]))
 
@@ -149,7 +145,6 @@ class ConfigManager:
         Returns:
             List of section names
         """
-        # Combine sections from both configs
         sections = set(self.config_parser.sections())
         sections.update(self.override_config.sections())
         return list(sections)

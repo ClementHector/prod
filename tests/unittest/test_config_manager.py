@@ -1,5 +1,5 @@
 """
-Tests unitaires pour la classe ConfigManager.
+Unit tests for the ConfigManager class.
 """
 
 import os

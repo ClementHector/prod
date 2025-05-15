@@ -8,10 +8,7 @@ import subprocess
 from typing import Dict, List, Optional, Tuple
 
 from src.error_handler import RezError
-from src.logger import Logger
-
-# Define Windows-specific flags
-# Value from win32process.CREATE_NEW_PROCESS_GROUP
+from src.logger import get_logger
 WINDOWS_CREATE_NEW_PROCESS_GROUP = 0x00000200
 
 
@@ -20,14 +17,14 @@ class RezManager:
     Manages Rez package manager integration, creating aliases for software.
     """
 
-    def __init__(self, logger: Optional[Logger] = None):
+    def __init__(self):
         """
         Initializes the Rez manager.
 
         Args:
             logger: Logger instance to use for logging
         """
-        self.logger = logger
+        self.logger = get_logger()
         self.system = platform.system()
         self._validate_rez_installation()
 
@@ -39,7 +36,6 @@ class RezManager:
             RezError: If Rez is not installed or not accessible
         """
         try:
-            # Check if rez is in PATH
             subprocess.run(
                 ["rez", "--version"],
                 stdout=subprocess.PIPE,
@@ -77,12 +73,10 @@ class RezManager:
         if alias_name is None:
             alias_name = software_name
 
-        # Generate the Rez command
         rez_command = self._generate_rez_command(
             software_name, software_version, packages
         )
 
-        # Create the alias
         try:
             subprocess.run(
                 ["rez-bind", "--alias", alias_name, "--command", rez_command],
@@ -91,17 +85,14 @@ class RezManager:
                 check=True,
             )
 
-            if self.logger:
-                self.logger.info(
-                    f"Created Rez alias '{alias_name}' for "
-                    f"{software_name}-{software_version}"
-                )
+            self.logger.info(
+                f"Created Rez alias '{alias_name}' for "
+                f"{software_name}-{software_version}"
+            )
 
             return alias_name
-
         except subprocess.SubprocessError as e:
-            if self.logger:
-                self.logger.error(f"Failed to create Rez alias: {e}")
+            self.logger.error(f"Failed to create Rez alias: {e}")
             raise RezError(f"Failed to create Rez alias: {e}")
 
     def _generate_rez_command(
@@ -118,15 +109,9 @@ class RezManager:
         Returns:
             Rez command string
         """
-        # Start with the base package
         package_list = [f"{software_name}-{software_version}"]
-
-        # Add additional packages
         package_list.extend(packages)
-
-        # Format the command
         command = f"rez env {' '.join(package_list)} -- {software_name}"
-
         return command
 
     def list_available_packages(self) -> Dict[str, List[str]]:
@@ -145,7 +130,6 @@ class RezManager:
                 text=True,
             )
 
-            # Parse the output
             packages: Dict[str, List[str]] = {}
             for line in result.stdout.splitlines():
                 if line.strip():
@@ -162,8 +146,7 @@ class RezManager:
             return packages
 
         except subprocess.SubprocessError as e:
-            if self.logger:
-                self.logger.error(f"Failed to list Rez packages: {e}")
+            self.logger.error(f"Failed to list Rez packages: {e}")
             raise RezError(f"Failed to list Rez packages: {e}")
 
     def execute_with_rez(
@@ -192,13 +175,9 @@ class RezManager:
         Raises:
             RezError: If execution fails
         """
-        # Start with the base package
         package_list = [f"{software_name}-{software_version}"]
-
-        # Add additional packages
         package_list.extend(packages)
 
-        # Build the command
         rez_command = ["rez", "env"] + package_list
 
         if env_only:
@@ -208,29 +187,19 @@ class RezManager:
 
         try:
             if background:
-                # Run in background
                 if self.system == "Windows":
-                    # For Windows, use CREATE_NEW_PROCESS_GROUP flag instead of shell=True
-                    # Import only on Windows to avoid errors on other platforms
                     creationflags_value = 0
                     if platform.system() == "Windows":
-                        # We need to handle this differently for mypy
-                        # Python's subprocess on Windows defines CREATE_NEW_PROCESS_GROUP
-                        # We can't use a direct import as it will fail on non-Windows
                         if hasattr(subprocess, "CREATE_NEW_PROCESS_GROUP"):
-                            # Use the attribute if it exists
                             creationflags_value = getattr(
                                 subprocess, "CREATE_NEW_PROCESS_GROUP"
                             )
                         else:
-                            # Fallback for older Python versions
                             creationflags_value = WINDOWS_CREATE_NEW_PROCESS_GROUP
 
-                    # Create a single command string for Windows cmd
                     cmd_parts = ["start", "/b"] + [str(arg) for arg in rez_command]
                     cmd_str = " ".join(cmd_parts)
 
-                    # Use subprocess.Popen with CREATE_NEW_PROCESS_GROUP flag
                     subprocess.Popen(
                         cmd_str,
                         stdout=subprocess.PIPE,
@@ -240,7 +209,6 @@ class RezManager:
                     )
                     return 0, "", ""
                 else:
-                    # For Unix-like systems, append "&"
                     subprocess.Popen(
                         rez_command,
                         stdout=subprocess.PIPE,
@@ -249,7 +217,6 @@ class RezManager:
                     )
                     return 0, "", ""
             else:
-                # Run in foreground
                 result = subprocess.run(
                     rez_command,
                     stdout=subprocess.PIPE,
@@ -260,6 +227,5 @@ class RezManager:
                 return result.returncode, result.stdout, result.stderr
 
         except subprocess.SubprocessError as e:
-            if self.logger:
-                self.logger.error(f"Failed to execute command with Rez: {e}")
+            self.logger.error(f"Failed to execute command with Rez: {e}")
             raise RezError(f"Failed to execute command with Rez: {e}")

@@ -1,5 +1,5 @@
 """
-Tests unitaires pour la fonction d'activation de l'environnement.
+Unit tests for the environment activation function.
 """
 
 import tempfile
@@ -14,41 +14,45 @@ from src.production_environment import ProductionEnvironment
 @pytest.fixture
 def mock_environment():
     """
-    Fixture pour créer un environnement de production mock.
+    Fixture to create a mock production environment.
     """
-    # Patch pour les méthodes privées
-    mock_load = patch("src.production_environment.ProductionEnvironment._load_config_paths")
-    mock_software = patch("src.production_environment.ProductionEnvironment._parse_software_config")
-    mock_pipeline = patch("src.production_environment.ProductionEnvironment._parse_pipeline_config")
-    # Patch pour EnvironmentManager
+    # Patch for private methods
+    mock_load = patch(
+        "src.production_environment.ProductionEnvironment._load_config_paths"
+    )
+    mock_software = patch(
+        "src.production_environment.ProductionEnvironment._parse_software_config"
+    )
+    mock_pipeline = patch(
+        "src.production_environment.ProductionEnvironment._parse_pipeline_config"
+    )
+    # Patch for EnvironmentManager
     mock_env_manager = patch("src.production_environment.EnvironmentManager")
-    
-    # Démarre les patches
+    # Start the patches
     mock_load_started = mock_load.start()
     mock_software_started = mock_software.start()
     mock_pipeline_started = mock_pipeline.start()
     mock_env_manager_started = mock_env_manager.start()
-    
-    # Configure les retours de mock
+
+    # Configure mock return values
     mock_load_started.return_value = {"software": [], "pipeline": []}
-    
+
     # Crée l'environnement de production avec les mocks
     logger = MagicMock(spec=Logger)
-    prod_env = ProductionEnvironment("test_prod", logger)
-    
+    prod_env = ProductionEnvironment("test_prod")
+
     # Prépare les données de test pour la liste des logiciels
     mock_software_list = [
         {"name": "maya", "version": "2024"},
         {"name": "nuke", "version": "14.0"},
-        {"name": "houdini", "version": "20.0"}
+        {"name": "houdini", "version": "20.0"},
     ]
-    
-    # Configure le mock pour get_software_list
+    # Configure mock for get_software_list
     prod_env.get_software_list = MagicMock(return_value=mock_software_list)
-    
+
     yield prod_env
-    
-    # Nettoyage des patches
+
+    # Cleanup patches
     mock_load.stop()
     mock_software.stop()
     mock_pipeline.stop()
@@ -57,34 +61,35 @@ def mock_environment():
 
 def test_activate_passes_software_list_to_generate_script(mock_environment):
     """
-    Test que la méthode activate() passe correctement la liste des logiciels
-    à generate_interactive_shell_script.
+    Test that activate() method correctly passes software list to
+    generate_interactive_shell_script.
     """
-    # Configure le mock pour renvoyer un chemin de script
-    mock_environment.env_manager.generate_interactive_shell_script.return_value = "/path/to/script.sh"
-    
-    # Configure source_interactive_shell pour ne rien faire
+    # Configure mock to return a script path
+    mock_environment.env_manager.generate_interactive_shell_script.return_value = (
+        "/path/to/script.sh"
+    )
+
+    # Configure source_interactive_shell to do nothing
     mock_environment.env_manager.source_interactive_shell = MagicMock()
-    
-    # Active l'environnement
+
+    # Activate the environment
     mock_environment.activate()
-    
-    # Vérifie que generate_interactive_shell_script a été appelée avec les bons arguments
+    # Verify that generate_interactive_shell_script was called with the correct arguments
     mock_generate = mock_environment.env_manager.generate_interactive_shell_script
-    assert mock_generate.called, "generate_interactive_shell_script n'a pas été appelée"
-    
+    assert mock_generate.called, "generate_interactive_shell_script was not called"
+
     call_args = mock_generate.call_args
-    
-    # Vérifie le premier argument (nom de la production)
+
+    # Verify the first argument (production name)
     assert call_args[0][0] == "test_prod"
-    
-    # Vérifie le deuxième argument (liste des logiciels)
-    assert len(call_args[0]) > 1, "La liste des logiciels n'a pas été passée"
+
+    # Verify the second argument (software list)
+    assert len(call_args[0]) > 1, "Software list was not passed"
     software_list = call_args[0][1]
     assert isinstance(software_list, list)
     assert "maya:2024" in software_list
     assert "nuke:14.0" in software_list
     assert "houdini:20.0" in software_list
-    
-    # Vérifie que source_interactive_shell a été appelée
+
+    # Verify that source_interactive_shell was called
     mock_environment.env_manager.source_interactive_shell.assert_called_once()

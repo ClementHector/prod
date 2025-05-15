@@ -93,7 +93,7 @@ def load_configs(config_context):
 
 @then("the merged configuration should contain all sections")
 def check_merged_sections(config_context):
-    """Vérifier que la configuration fusionnée contient toutes les sections."""
+    """Check that the merged configuration contains all sections."""
     sections = config_context["config_manager"].get_sections()
     assert "maya" in sections
     assert "nuke" in sections
@@ -104,8 +104,7 @@ def check_merged_sections(config_context):
 @then("production-specific values should override studio-wide values")
 def check_override_values(config_context):
     """
-    Vérifier que les valeurs spécifiques à la production
-    remplacent les valeurs studio.
+    Check that production-specific values override studio-wide values.
     """
     # Maya version should be from prod config
     maya_version = config_context["config_manager"].get_merged_config("maya", "version")
@@ -124,21 +123,21 @@ def check_override_values(config_context):
 
 @then("I should get the production-specific Maya version")
 def check_maya_version(config_context):
-    """Vérifier que la version de Maya est celle spécifique à la production."""
+    """Check that the Maya version is the production-specific one."""
     maya_version = config_context["config_manager"].get_merged_config("maya", "version")
     assert maya_version == "2023.3.2"
 
 
 @then("I should get the production-specific Nuke version")
 def check_nuke_version(config_context):
-    """Vérifier que la version de Nuke est celle spécifique à la production."""
+    """Check that the Nuke version is the production-specific one."""
     nuke_version = config_context["config_manager"].get_merged_config("nuke", "version")
     assert nuke_version == "12.3"
 
 
 @then("Maya should have the specified required packages")
 def check_maya_packages(config_context):
-    """Vérifier que Maya a les packages requis spécifiés."""
+    """Check that Maya has the specified required packages."""
     maya_packages = config_context["config_manager"].get_merged_config(
         "maya", "packages"
     )
@@ -214,7 +213,7 @@ def initialize_production_environment(config_context, monkeypatch):
 
     # Create the production environment
     config_context["prod_env"] = ProductionEnvironment(
-        config_context["prod_name"], logger
+        config_context["prod_name"],
     )
 
 

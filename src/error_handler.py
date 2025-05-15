@@ -5,24 +5,21 @@ Error handling for the Prod CLI tool.
 import json
 import os
 import sys
-from typing import Dict, Optional
+from typing import Dict
 
-from src.logger import Logger
-
+from src.logger import get_logger
 
 class ErrorHandler:
     """
     Handles errors and provides clear error messages with resolution suggestions.
     """
 
-    def __init__(self, logger: Optional[Logger] = None):
+    def __init__(self):
         """
         Initializes the error handler.
 
-        Args:
-            logger: Logger instance to use for logging errors
         """
-        self.logger = logger
+        self.logger = get_logger()
         self.error_messages = self._load_error_messages()
 
     def _load_error_messages(self) -> Dict[str, Dict[str, str]]:
@@ -32,7 +29,6 @@ class ErrorHandler:
         Returns:
             Dictionary of error messages
         """
-        # Default error messages
         default_messages = {
             "FileNotFoundError": {
                 "message": "The specified file was not found: {error}",
@@ -63,7 +59,6 @@ class ErrorHandler:
             },
         }
 
-        # Try to load custom error messages
         error_messages_path = os.path.join(
             os.path.dirname(__file__), "../config/error_messages.json"
         )
@@ -71,11 +66,9 @@ class ErrorHandler:
             try:
                 with open(error_messages_path, "r") as f:
                     custom_messages = json.load(f)
-                    # Merge default and custom messages
                     default_messages.update(custom_messages)
             except Exception as e:
-                if self.logger:
-                    self.logger.warning(f"Failed to load custom error messages: {e}")
+                self.logger.warning(f"Failed to load custom error messages: {e}")
 
         return default_messages
 
@@ -93,12 +86,9 @@ class ErrorHandler:
             self._display_error_message(error_type, error)
             self._suggest_solution(error_type)
         else:
-            # Generic error handling
             print(f"Error: {error}")
 
-        # Log the error
-        if self.logger:
-            self.logger.error(f"{error_type}: {str(error)}")
+        self.logger.error(f"{error_type}: {str(error)}")
 
         if exit_program:
             sys.exit(1)
