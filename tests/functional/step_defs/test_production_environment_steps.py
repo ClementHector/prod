@@ -241,9 +241,7 @@ def activate_production_env(prod_env_context):
                 mock_source_interactive_shell,
             ),
         ):
-            prod_env = ProductionEnvironment(
-                prod_env_context["prod_name"]
-            )
+            prod_env = ProductionEnvironment(prod_env_context["prod_name"])
 
             # Ensure that the software list is properly defined for tests
             def mock_get_software_list():
@@ -374,9 +372,7 @@ def check_software_list(prod_env_context):
     ):
 
         if "prod_env" not in prod_env_context:
-            prod_env = ProductionEnvironment(
-                prod_env_context["prod_name"]
-            )
+            prod_env = ProductionEnvironment(prod_env_context["prod_name"])
             prod_env_context["prod_env"] = prod_env
 
         software_list = prod_env_context["prod_env"].get_software_list()
@@ -405,9 +401,7 @@ def production_env_activated(prod_env_context):
         prod_env_context["mock_validate_rez"],
     ):
 
-        prod_env = ProductionEnvironment(
-            prod_env_context["prod_name"]
-        )
+        prod_env = ProductionEnvironment(prod_env_context["prod_name"])
         prod_env.activate()
 
         # Save the environment in the context

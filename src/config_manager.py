@@ -4,6 +4,7 @@ Configuration management for the Prod CLI tool.
 
 import configparser
 import os
+from pathlib import Path
 from typing import Dict, List, Optional
 
 
@@ -24,7 +25,8 @@ class ConfigManager:
         Args:
             config_path: Path to the configuration file
         """
-        if os.path.exists(config_path):
+        path = Path(config_path)
+        if path.exists():
             self.config_parser.read(config_path)
             self._validate_config()
         else:
@@ -47,7 +49,8 @@ class ConfigManager:
             configs: List of paths to configuration files
         """
         for config in configs:
-            if os.path.exists(config):
+            path = Path(config)
+            if path.exists():
                 self.config_parser.read(config)
             else:
                 print(f"Warning: Config file not found: {config}")
@@ -55,11 +58,11 @@ class ConfigManager:
     def load_override_config(self, config_path: str) -> None:
         """
         Loads an override configuration file.
-
         Args:
             config_path: Path to the override configuration file
         """
-        if os.path.exists(config_path):
+        path = Path(config_path)
+        if path.exists():
             self.override_config.read(config_path)
         else:
             raise FileNotFoundError(

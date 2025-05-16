@@ -4,15 +4,16 @@ Production environment management for the Prod CLI tool.
 
 import ast
 import os
+from pathlib import Path
 from typing import Dict, List, Optional, cast
 
 from src.config_manager import ConfigManager
 from src.environment_manager import EnvironmentManager
 from src.error_handler import ConfigError
+from src.logger import get_logger
 from src.path_processor import PathProcessor
 from src.rez_manager import RezManager
 
-from src.logger import get_logger
 
 class SoftwareConfig:
     """
@@ -180,6 +181,69 @@ class ProductionEnvironment:
         self.env_manager = EnvironmentManager()
         self.rez_manager = RezManager()
 
+    @staticmethod
+    def _get_settings_path() -> Path:
+        """
+        Gets the path to the settings file.
+
+        Returns:
+            Path to the settings file
+        """
+        return Path(__file__).parent.joinpath("../config/prod-settings.ini").resolve()
+
+    def _process_config_path(self, config_path: str) -> List[str]:
+        """
+        Process a configuration path string into a list of individual paths.
+        Handles both Windows (;) and Unix (:) path separators.
+
+        Args:
+            config_path: Raw configuration path string
+
+        Returns:
+            List of processed paths
+        """
+        if not config_path:
+            return []
+
+        config_path = config_path.replace("{PROD_NAME}", self.prod_name)
+        paths = []
+
+        if ";" in config_path:
+            # Windows-style path separator
+            parts = config_path.split(";")
+            for part in parts:
+                if not part:
+                    continue
+
+                # Handle possible Unix-style subdirectories
+                if ":" in part:
+                    # Process Unix-style paths within Windows-style separators
+                    if part.startswith("/"):
+                        # Pure Unix path
+                        unix_parts = part.split(":")
+                        paths.extend([p for p in unix_parts if p])
+                    else:
+                        # Might be Windows drive letter
+                        path_processor = PathProcessor(part)
+                        paths.extend(path_processor.split_paths())
+                else:
+                    paths.append(part)
+        elif ":" in config_path:
+            # Unix-style path separator or Windows drive letters
+            if config_path.startswith("/"):
+                # Pure Unix path, direct split is fine
+                unix_parts = config_path.split(":")
+                paths.extend([p for p in unix_parts if p])
+            else:
+                # Might contain Windows drive letters
+                path_processor = PathProcessor(config_path)
+                paths = path_processor.split_paths()
+        else:
+            # Single path with no separators
+            paths = [config_path]
+
+        return [path for path in paths if path]
+
     def _load_config_paths(self) -> Dict[str, List[str]]:
         """
         Loads the configuration paths from environment variables.
@@ -187,11 +251,9 @@ class ProductionEnvironment:
         Returns:
             Dictionary of configuration paths
         """
-        settings_path = os.path.join(
-            os.path.dirname(__file__), "../config/prod-settings.ini"
-        )
+        settings_path = self._get_settings_path()
 
-        if not os.path.exists(settings_path):
+        if not settings_path.exists():
             raise ConfigError(f"Prod settings file not found: {settings_path}")
 
         settings = ConfigManager()
@@ -207,60 +269,8 @@ class ProductionEnvironment:
             "environment", "PIPELINE_CONFIG", ""
         )
 
-        software_paths = []
-        if software_config_path:
-            software_config_path = software_config_path.replace(
-                "{PROD_NAME}", self.prod_name
-            )
-
-            if ";" in software_config_path:
-                parts = software_config_path.split(";")
-
-                for part in parts:
-                    if not part:
-                        continue
-
-                    if ":" in part and part.startswith("/"):
-                        unix_parts = part.split(":")
-                        software_paths.extend([p for p in unix_parts if p])
-                    else:
-                        software_paths.append(part)
-            elif software_config_path.startswith("/") and ":" in software_config_path:
-                software_paths = [p for p in software_config_path.split(":") if p]
-            elif ":" in software_config_path:
-                path_processor = PathProcessor(software_config_path)
-                software_paths = path_processor.split_paths()
-            else:
-                software_paths = [software_config_path]
-
-        pipeline_paths = []
-        if pipeline_config_path:
-            pipeline_config_path = pipeline_config_path.replace(
-                "{PROD_NAME}", self.prod_name
-            )
-
-            if ";" in pipeline_config_path:
-                parts = pipeline_config_path.split(";")
-
-                for part in parts:
-                    if not part:
-                        continue
-
-                    if ":" in part and part.startswith("/"):
-                        unix_parts = part.split(":")
-                        pipeline_paths.extend([p for p in unix_parts if p])
-                    else:
-                        pipeline_paths.append(part)
-            elif pipeline_config_path.startswith("/") and ":" in pipeline_config_path:
-                pipeline_paths = [p for p in pipeline_config_path.split(":") if p]
-            elif ":" in pipeline_config_path:
-                path_processor = PathProcessor(pipeline_config_path)
-                pipeline_paths = path_processor.split_paths()
-            else:
-                pipeline_paths = [pipeline_config_path]
-
-        software_paths = [path for path in software_paths if path]
-        pipeline_paths = [path for path in pipeline_paths if path]
+        software_paths = self._process_config_path(software_config_path)
+        pipeline_paths = self._process_config_path(pipeline_config_path)
 
         self.logger.debug(f"Software config paths: {software_paths}")
         self.logger.debug(f"Pipeline config paths: {pipeline_paths}")
@@ -277,7 +287,8 @@ class ProductionEnvironment:
         config_manager = ConfigManager()
 
         for config_path in self.config_paths["software"]:
-            if os.path.exists(config_path):
+            path = Path(config_path)
+            if path.exists():
                 self.logger.debug(f"Loading software config: {config_path}")
                 config_manager.load_config(config_path)
             else:
@@ -295,7 +306,8 @@ class ProductionEnvironment:
         config_manager = ConfigManager()
 
         for config_path in self.config_paths["pipeline"]:
-            if os.path.exists(config_path):
+            path = Path(config_path)
+            if path.exists():
                 self.logger.debug(f"Loading pipeline config: {config_path}")
                 config_manager.load_config(config_path)
             else:

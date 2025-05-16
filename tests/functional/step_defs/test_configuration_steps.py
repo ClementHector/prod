@@ -196,19 +196,35 @@ def initialize_production_environment(config_context, monkeypatch):
     from src.production_environment import ProductionEnvironment
 
     # Mock the logger
-    logger = Logger()
+    logger = Logger()  # Mock Path.exists to always return True
+    from pathlib import Path
 
-    # Mock the file existence check to return True
+    original_exists = Path.exists
+
+    def mock_exists(self):
+        return True
+
+    monkeypatch.setattr(Path, "exists", mock_exists)
+
+    # Mock path joining for prod-settings.ini
+    original_joinpath = Path.joinpath
+
+    def mock_joinpath(self, *args):
+        if args and "prod-settings.ini" in str(args[-1]):
+            return Path(config_context["settings_path"])
+        return original_joinpath(self, *args)
+
+    monkeypatch.setattr(Path, "joinpath", mock_joinpath)
+
+    # Keep the os.path mocks for backward compatibility
     monkeypatch.setattr(os.path, "exists", lambda path: True)
 
-    # Define a non-recursive mock function for os.path.join
     def mock_path_join(*args):
         if args and "prod-settings.ini" in args[-1]:
             return config_context["settings_path"]
         # Use the real os.path.join for other cases, but avoiding recursion
         return os.path.normpath("/".join(args))
 
-    # Mock os.path.join
     monkeypatch.setattr(os.path, "join", mock_path_join)
 
     # Create the production environment

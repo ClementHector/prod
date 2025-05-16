@@ -37,7 +37,7 @@ class PathProcessor:
             )
 
             if is_drive_letter:
-                temp_path = temp_path[: i + 1] + "@" + temp_path[i + 2 :]
+                temp_path = temp_path[: i + 1] + "@" + temp_path[i + 2:]
             i += 1
 
         parts = temp_path.split(":")
@@ -45,11 +45,9 @@ class PathProcessor:
         result = []
         for part in parts:
             if "@" in part:
-                fixed_part = part.replace("@", ":")
-                result.append(fixed_part)
-            else:
-                if part:
-                    result.append(part)
+                result.append(part.replace("@", ":"))
+            elif part:
+                result.append(part)
 
         if not result and self.path_string:
             result = [self.path_string]

@@ -7,6 +7,7 @@ from typing import Optional
 
 LoggerName = "prod"
 
+
 def get_logger() -> logging.Logger:
     """
     Returns the logger instance.
@@ -16,20 +17,22 @@ def get_logger() -> logging.Logger:
     """
     return logging.getLogger(LoggerName)
 
+
 class Logger:
     """
     Handles logging functionality with support for multiple verbosity levels.
     Uses the default Python logging system with simplified format.
     """
 
-    def __init__(self, log_level: str = "INFO"):
+    def __init__(self, verbose: Optional[bool] = False):
         """
-        Initializes the logger with the specified log level.
+        Initializes the logger with the specified verbosity level.
 
         Args:
-            log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+            verbose: Whether to enable verbose logging.
 
         """
+        log_level = "DEBUG" if verbose else "INFO"
         self._logger = self._setup_logger(log_level)
 
     @property

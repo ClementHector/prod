@@ -64,27 +64,24 @@ class SoftwareCLI:
         Returns:
             Exit code
         """
-        if args is None:
-            args = sys.argv[1:]
-
-        parsed_args = self.parser.parse_args(args)
+        parsed_args = self.parser.parse_args(args if args is not None else sys.argv[1:])
 
         prod_name = os.environ.get("PROD")
 
         if not prod_name:
-            error_msg = "Error: No production environment is active. "
-            error_msg += "Please enter a production first with 'prod <production>'."
+            error_msg = (
+                "Error: No Variable PROD found in the environment."
+                "Please add it to the configuration file."
+            )
             print(error_msg)
             return 1
 
         log_level = "DEBUG" if parsed_args.verbose else "INFO"
         self.logger = Logger(log_level)
-
         self.error_handler = ErrorHandler()
 
         try:
             env = ProductionEnvironment(prod_name)
-
             additional_packages = parsed_args.packages or []
             env_only = parsed_args.env_only
 

@@ -1,5 +1,5 @@
 """
-Step definitions pour les tests fonctionnels de l'interface en ligne de commande.
+Step definitions for functional tests of the command line interface.
 """
 
 import contextlib
@@ -7,6 +7,7 @@ import os
 import tempfile
 import unittest.mock as mock
 from io import StringIO
+from pathlib import Path
 
 import pytest
 from pytest_bdd import given, parsers, scenarios, then, when
@@ -14,7 +15,7 @@ from pytest_bdd import given, parsers, scenarios, then, when
 from src.cli import CLI
 from src.software_cli import SoftwareCLI
 
-# Importer tous les scénarios du fichier feature
+# Import all scenarios from the feature file
 scenarios("../features/cli.feature")
 
 
@@ -53,18 +54,29 @@ def several_productions_exist(cli_context):
         os.makedirs(os.path.join(prods_dir, prod), exist_ok=True)
 
     # Mock for CLI._handle_list_command to use our test directory
-    # Create a real path joining function that avoids recursion
-    original_join = os.path.join
+    # Create mock for Path.joinpath and Path.resolve to use our test directory
+    original_joinpath = Path.joinpath
 
-    def path_join_side_effect(*args):
-        if len(args) > 1 and args[1] == "../config/prods":
-            return original_join(cli_context["temp_dir"].name, "config", "prods")
-        return original_join(*args)
+    def mock_joinpath_side_effect(self, *args):
+        if len(args) > 0 and "../config/prods" in str(args[0]):
+            # Return a Path object for our temporary prods directory
+            return Path(os.path.join(cli_context["temp_dir"].name, "config", "prods"))
+        return original_joinpath(self, *args)
 
-    mock_prods_dir = mock.patch(
-        "src.cli.os.path.join", side_effect=path_join_side_effect
-    )
-    cli_context["mock_prods_dir"] = mock_prods_dir
+    # Mock for Path.resolve to return the same Path for our test
+    original_resolve = Path.resolve
+
+    def mock_resolve_side_effect(self):
+        if str(self).endswith("config/prods"):
+            return Path(os.path.join(cli_context["temp_dir"].name, "config", "prods"))
+        return original_resolve(self)
+
+    # Apply both mocks
+    mock_joinpath = mock.patch("pathlib.Path.joinpath", mock_joinpath_side_effect)
+    mock_resolve = mock.patch("pathlib.Path.resolve", mock_resolve_side_effect)
+
+    cli_context["mock_joinpath"] = mock_joinpath
+    cli_context["mock_resolve"] = mock_resolve
 
 
 @given(parsers.parse('a valid production "{prod_name}" exists'))
@@ -125,8 +137,10 @@ def run_command(cli_context, command):
 
             # Ajouter les mocks nécessaires
             mocks = []
-            if "mock_prods_dir" in cli_context:
-                mocks.append(cli_context["mock_prods_dir"])
+            if "mock_joinpath" in cli_context:
+                mocks.append(cli_context["mock_joinpath"])
+            if "mock_resolve" in cli_context:
+                mocks.append(cli_context["mock_resolve"])
             if "mock_prod_env" in cli_context:
                 mocks.append(cli_context["mock_prod_env"])
 

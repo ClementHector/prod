@@ -9,6 +9,7 @@ from typing import Dict, List, Optional, Tuple
 
 from src.error_handler import RezError
 from src.logger import get_logger
+
 WINDOWS_CREATE_NEW_PROCESS_GROUP = 0x00000200
 
 
@@ -111,7 +112,17 @@ class RezManager:
         """
         package_list = [f"{software_name}-{software_version}"]
         package_list.extend(packages)
-        command = f"rez env {' '.join(package_list)} -- {software_name}"
+
+        # Include the appropriate shell based on the platform
+        # Get current system - don't rely on stored value which might be from initialization time
+        current_system = platform.system()
+        shell_prefix = ""
+        if current_system == "Windows":
+            shell_prefix = "cmd /c "
+        else:
+            shell_prefix = "bash -c "
+
+        command = f"{shell_prefix}rez env {' '.join(package_list)} -- {software_name}"
         return command
 
     def list_available_packages(self) -> Dict[str, List[str]]:
@@ -229,3 +240,42 @@ class RezManager:
         except subprocess.SubprocessError as e:
             self.logger.error(f"Failed to execute command with Rez: {e}")
             raise RezError(f"Failed to execute command with Rez: {e}")
+
+    def launch_software(
+        self, software_name: str, args: List[str] = None
+    ) -> subprocess.Popen:
+        """
+        Launch software using Rez.
+
+        Args:
+            software_name: Name of the software to launch
+            args: Additional command line arguments for the software
+
+        Returns:
+            Popen process object
+
+        Raises:
+            RezError: If software launch fails
+        """
+        if args is None:
+            args = []
+
+        try:
+            # Construct command to run the software
+            cmd = [software_name] + args
+
+            # Launch the software
+            process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+
+            self.logger.info(f"Launched {software_name} with args: {args}")
+            return process
+
+        except subprocess.SubprocessError as e:
+            error_msg = f"Failed to launch {software_name}: {e}"
+            self.logger.error(error_msg)
+            raise RezError(error_msg)

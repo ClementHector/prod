@@ -1,3 +1,3 @@
 """
-Tests unitaires pour le Prod CLI tool.
+Unit tests for the Prod CLI tool.
 """

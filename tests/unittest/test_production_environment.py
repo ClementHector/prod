@@ -4,6 +4,7 @@ Unit tests for the ProductionEnvironment class.
 
 import os
 import tempfile
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -21,7 +22,7 @@ def mock_config_file():
         Tuple of (temp_dir, config_path)
     """
     temp_dir = tempfile.TemporaryDirectory()
-    settings_path = os.path.join(temp_dir.name, "prod-settings.ini")
+    settings_path = Path(temp_dir.name) / "prod-settings.ini"
 
     yield temp_dir, settings_path
 
@@ -53,11 +54,12 @@ def test_load_config_paths_unix_separator(mock_config_file, logger):
 SOFTWARE_CONFIG=/path/to/studio/software.ini:/path/to/prod/{PROD_NAME}/config/software.ini
 PIPELINE_CONFIG=/path/to/studio/pipeline.ini:/path/to/prod/{PROD_NAME}/config/pipeline.ini
 """
-        )
-
-    # Mock config loading to use our test file
-    with patch("os.path.join", return_value=settings_path):
-        with patch("os.path.exists", return_value=True):
+        )  # Mock config loading to use our test file
+    with patch(
+        "src.production_environment.ProductionEnvironment._get_settings_path",
+        return_value=Path(settings_path),
+    ):
+        with patch("pathlib.Path.exists", return_value=True):
             prod_env = ProductionEnvironment("test_prod")
 
             # Access the private method directly for testing
@@ -83,9 +85,9 @@ def test_load_config_paths_windows_separator(mock_config_file, logger):
     """
     Test loading config paths with Windows separator.
     """
-    temp_dir, settings_path = mock_config_file
-
-    # Create settings file with Windows separator
+    temp_dir, settings_path = (
+        mock_config_file  # Create settings file with Windows separator
+    )
     with open(settings_path, "w") as f:
         f.write(
             """
@@ -96,8 +98,11 @@ PIPELINE_CONFIG=C:\\path\\to\\studio\\pipeline.ini;C:\\path\\to\\prod\\{PROD_NAM
         )
 
     # Mock config loading to use our test file
-    with patch("os.path.join", return_value=settings_path):
-        with patch("os.path.exists", return_value=True):
+    with patch(
+        "src.production_environment.ProductionEnvironment._get_settings_path",
+        return_value=Path(settings_path),
+    ):
+        with patch("pathlib.Path.exists", return_value=True):
             prod_env = ProductionEnvironment("test_prod")
 
             # Access the private method directly for testing
@@ -123,9 +128,9 @@ def test_load_config_paths_mixed_separator(mock_config_file, logger):
     """
     Test loading config paths with mixed separators (Windows paths but Unix separator).
     """
-    temp_dir, settings_path = mock_config_file
-
-    # Create settings file with mixed separator format
+    temp_dir, settings_path = (
+        mock_config_file  # Create settings file with mixed separator format
+    )
     with open(settings_path, "w") as f:
         f.write(
             """
@@ -136,8 +141,11 @@ PIPELINE_CONFIG=C:\\path\\to\\studio\\pipeline.ini:C:\\path\\to\\prod\\{PROD_NAM
         )
 
     # Mock config loading to use our test file
-    with patch("os.path.join", return_value=settings_path):
-        with patch("os.path.exists", return_value=True):
+    with patch(
+        "src.production_environment.ProductionEnvironment._get_settings_path",
+        return_value=Path(settings_path),
+    ):
+        with patch("pathlib.Path.exists", return_value=True):
             prod_env = ProductionEnvironment("test_prod")
 
             # Access the private method directly for testing
@@ -163,9 +171,9 @@ def test_load_config_paths_both_separators(mock_config_file, logger):
     """
     Test loading config paths with both Windows and Unix separators in the same path.
     """
-    temp_dir, settings_path = mock_config_file
-
-    # Create settings file with mixed separators
+    temp_dir, settings_path = (
+        mock_config_file  # Create settings file with mixed separators
+    )
     with open(settings_path, "w") as f:
         f.write(
             """
@@ -176,8 +184,11 @@ PIPELINE_CONFIG=C:\\path\\to\\studio\\pipeline.ini;/unix/path/pipeline.ini:/anot
         )
 
     # Mock config loading to use our test file
-    with patch("os.path.join", return_value=settings_path):
-        with patch("os.path.exists", return_value=True):
+    with patch(
+        "src.production_environment.ProductionEnvironment._get_settings_path",
+        return_value=Path(settings_path),
+    ):
+        with patch("pathlib.Path.exists", return_value=True):
             prod_env = ProductionEnvironment("test_prod")
 
             # Access the private method directly for testing
@@ -205,9 +216,7 @@ def test_load_config_paths_no_separator(mock_config_file, logger):
     """
     Test loading config paths with no separator.
     """
-    temp_dir, settings_path = mock_config_file
-
-    # Create settings file with no separator
+    temp_dir, settings_path = mock_config_file  # Create settings file with no separator
     with open(settings_path, "w") as f:
         f.write(
             """
@@ -218,8 +227,11 @@ PIPELINE_CONFIG=C:\\path\\to\\pipeline.ini
         )
 
     # Mock config loading to use our test file
-    with patch("os.path.join", return_value=settings_path):
-        with patch("os.path.exists", return_value=True):
+    with patch(
+        "src.production_environment.ProductionEnvironment._get_settings_path",
+        return_value=Path(settings_path),
+    ):
+        with patch("pathlib.Path.exists", return_value=True):
             prod_env = ProductionEnvironment("test_prod")
 
             # Access the private method directly for testing

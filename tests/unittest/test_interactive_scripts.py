@@ -10,23 +10,15 @@ import pytest
 from src.environment_manager import EnvironmentManager
 
 
-@pytest.fixture
-def env_manager():
-    """
-    Fixture to create an environment manager.
-
-    Returns:
-        EnvironmentManager
-    """
-    return EnvironmentManager()
-
-
-def test_generate_interactive_shell_script_with_software_list(env_manager):
+def test_generate_interactive_shell_script_with_software_list():
     """
     Test the generation of an interactive script with a directly provided software list.
     """
-    # Configure the test environment
+    # Test with Windows
     with patch("platform.system", return_value="Windows"):
+        # Create the environment manager inside the patch context
+        env_manager = EnvironmentManager()
+
         # Set environment variables
         env_manager.set_environment_variables(
             {"PROD": "dlt", "PROD_ROOT": "/s/prods/dlt", "PROD_TYPE": "vfx"}
@@ -58,8 +50,16 @@ def test_generate_interactive_shell_script_with_software_list(env_manager):
             assert "* houdini (version 20.0)" in content
             assert "* nuke (version 14.0)" in content
 
-    # Now test with Linux
+    # Test with Linux
     with patch("platform.system", return_value="Linux"):
+        # Create a new environment manager inside the Linux patch context
+        env_manager = EnvironmentManager()
+
+        # Set environment variables
+        env_manager.set_environment_variables(
+            {"PROD": "dlt", "PROD_ROOT": "/s/prods/dlt", "PROD_TYPE": "vfx"}
+        )
+
         # Generate the script
         script_path = env_manager.generate_interactive_shell_script(
             "dlt", software_list

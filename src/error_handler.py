@@ -9,6 +9,7 @@ from typing import Dict
 
 from src.logger import get_logger
 
+
 class ErrorHandler:
     """
     Handles errors and provides clear error messages with resolution suggestions.

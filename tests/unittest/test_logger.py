@@ -4,35 +4,30 @@ Unit tests for the Logger class.
 
 from unittest import mock
 
-import pytest
-
 from src.logger import Logger
-
-
-# Fixture removed as it's no longer needed since log_file parameter was removed
 
 
 def test_logger_initialization():
     """Test logger initialization with default settings."""
     logger = Logger()
-    assert logger.logger.level == 20  # INFO level
+    assert logger.logger.level == 20
 
-    # Test with DEBUG level
-    logger = Logger(log_level="DEBUG")
-    assert logger.logger.level == 10  # DEBUG level
+    logger = Logger(verbose=False)
+    assert logger.logger.level == 20
+
+    logger = Logger(verbose=True)
+    assert logger.logger.level == 10
 
 
 def test_logger_handlers():
     """Test logger handlers configuration."""
-    logger = Logger(log_level="INFO")
+    logger = Logger()
 
-    # Test that logger is properly initialized
     assert logger.logger is not None
-    
-    # Verify that we only have a single handler (console)
+
     assert len(logger.logger.handlers) == 1
-    # Verify it's not a file handler
-    assert all(not hasattr(h, 'baseFilename') for h in logger.logger.handlers)
+
+    assert all(not hasattr(h, "baseFilename") for h in logger.logger.handlers)
 
 
 def test_logging_methods():
@@ -62,14 +57,11 @@ def test_logging_methods():
 
 def test_set_log_level():
     """Test setting the log level."""
-    logger = Logger(log_level="INFO")
-    assert logger.logger.level == 20  # INFO level
+    logger = Logger()
+    assert logger.logger.level == 20
 
     logger.set_log_level("DEBUG")
-    assert logger.logger.level == 10  # DEBUG level
+    assert logger.logger.level == 10
 
     logger.set_log_level("ERROR")
-    assert logger.logger.level == 40  # ERROR level
-
-
-# get_log_file_path has been removed as part of the simplification
+    assert logger.logger.level == 40

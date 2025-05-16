@@ -3,8 +3,8 @@ Command line interface for the Prod CLI tool.
 """
 
 import argparse
-import os
 import sys
+from pathlib import Path
 from typing import List, Optional
 
 from src.error_handler import ConfigError, ErrorHandler, RezError
@@ -35,17 +35,12 @@ class CLI:
         parser = argparse.ArgumentParser(
             description="Prod CLI Tool for managing production environments"
         )
-
-        subparsers = parser.add_subparsers(dest="command", help="Command to execute")
-
         parser.add_argument(
             "--verbose", "-v", action="store_true", help="Verbose output"
         )
 
-        list_parser = subparsers.add_parser("list", help="List available productions")
-        list_parser.add_argument(
-            "--verbose", "-v", action="store_true", help="Verbose output"
-        )
+        subparsers = parser.add_subparsers(dest="command", help="Command to execute")
+        subparsers.add_parser("list", help="List available productions")
 
         return parser
 
@@ -57,7 +52,7 @@ class CLI:
             args: Command line arguments, if None, sys.argv[1:] is used
 
         Returns:
-            Exit code
+            Exit code - 0 for success, 1 for error
         """
         if args is None:
             args = sys.argv[1:]
@@ -66,35 +61,29 @@ class CLI:
             self.parser.print_help()
             return 0
 
-        known_commands = {"list"}
-        if args[0] in known_commands:
-            parsed_args = self.parser.parse_args(args)
-        else:
-
-            class Args(argparse.Namespace):
-                """Simple namespace to mimic argparse.Namespace."""
-
-                pass
-
-            enter_args = Args()
-            enter_args.production = args[0]
-            enter_args.verbose = "--verbose" in args or "-v" in args
-            log_level = "DEBUG" if enter_args.verbose else "INFO"
-            self.logger = Logger(log_level)
-            self.error_handler = ErrorHandler()
-            return self._handle_enter_command(enter_args)
-
-        is_verbose = getattr(parsed_args, "verbose", False)
-        log_level = "DEBUG" if is_verbose else "INFO"
-        self.logger = Logger(log_level)
+        is_verbose = "--verbose" in args or "-v" in args
+        self.logger = Logger(is_verbose)
         self.error_handler = ErrorHandler()
 
         try:
-            if parsed_args.command == "list":
-                return self._handle_list_command()
-            else:
+            known_commands = {"list"}
+            if args[0] in known_commands:
+                parsed_args = self.parser.parse_args(args)
+                if parsed_args.command == "list":
+                    return self._handle_list_command()
                 self.parser.print_help()
                 return 0
+            else:
+
+                class Args(argparse.Namespace):
+                    """Simple namespace to mimic argparse.Namespace."""
+
+                    pass
+
+                enter_args = Args()
+                enter_args.production = args[0]
+                enter_args.verbose = is_verbose
+                return self._handle_enter_command(enter_args)
         except (ConfigError, RezError) as e:
             if self.error_handler:
                 self.error_handler.handle_error(e)
@@ -107,20 +96,16 @@ class CLI:
         Handles the list command.
 
         Returns:
-            Exit code
+            Exit code - 0 for success, 1 for error
         """
-        prods_dir = os.path.join(os.path.dirname(__file__), "../config/prods")
+        prods_dir = Path(__file__).parent.joinpath("../config/prods").resolve()
 
-        if not os.path.exists(prods_dir):
+        if not prods_dir.exists():
             print("No productions found")
             return 0
 
         try:
-            prods = [
-                d
-                for d in os.listdir(prods_dir)
-                if os.path.isdir(os.path.join(prods_dir, d))
-            ]
+            prods = [d.name for d in prods_dir.iterdir() if d.is_dir()]
 
             if prods:
                 print("Available productions:")
@@ -129,13 +114,15 @@ class CLI:
             else:
                 print("No productions found")
 
+            return 0
+
         except Exception as e:
             if self.logger:
                 self.logger.error(f"Failed to list productions: {e}")
             else:
                 print(f"Failed to list productions: {e}")
 
-        return 0
+            return 1
 
     def _handle_enter_command(self, args: argparse.Namespace) -> int:
         """
@@ -145,7 +132,7 @@ class CLI:
             args: Command line arguments
 
         Returns:
-            Exit code
+            Exit code - 0 for success, 1 for error
         """
         try:
             env = ProductionEnvironment(args.production)

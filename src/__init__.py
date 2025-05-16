@@ -1,4 +1,4 @@
 """
-Prod CLI - Un outil de ligne de commande pour gérer les environnements
-de production pour l'animation et les VFX.
+Prod CLI - A command line tool for managing production environments
+for animation and VFX.
 """

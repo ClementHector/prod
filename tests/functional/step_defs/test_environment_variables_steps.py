@@ -164,9 +164,7 @@ def run_command(env_var_context, command):
         # Create a production environment object
         # Mock activation for the test - similar to what's done in
         # production_env_activated
-        env = ProductionEnvironment(
-            env_var_context["prod_name"]
-        )
+        env = ProductionEnvironment(env_var_context["prod_name"])
         # Manually set environment variables for the test
         env_var_context["env_variables"] = {
             "PROD": env_var_context["prod_name"],
@@ -193,9 +191,7 @@ def production_env_activated(env_var_context):
     # Mock for production environment
     with env_var_context["mock_load_config_paths"]:
         # Create the environment
-        env = ProductionEnvironment(
-            env_var_context["prod_name"]
-        )
+        env = ProductionEnvironment(env_var_context["prod_name"])
 
         # Manually set environment variables for the test
         env_var_context["env_variables"] = {
