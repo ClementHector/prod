@@ -15,9 +15,6 @@ setup(
     entry_points={
         'console_scripts': [
             'prod=src.cli:main',
-            'maya=src.software_cli:maya_main',
-            'nuke=src.software_cli:nuke_main',
-            'houdini=src.software_cli:houdini_main',
         ],
     },
     extras_require={
@@ -33,4 +30,4 @@ setup(
         "Programming Language :: Python :: 3.9",
         "Topic :: Utilities",
     ],
-) 
+)

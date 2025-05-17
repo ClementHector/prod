@@ -5,9 +5,10 @@ Environment variable management for the Prod CLI tool.
 import os
 import platform
 import subprocess
+from pathlib import Path
 import tempfile
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 from src.logger import get_logger
 
@@ -70,7 +71,7 @@ class ShellScriptGenerator(ABC):
         Returns:
             Path to the script directory
         """
-        script_dir = os.path.join(tempfile.gettempdir(), "prod_cli")
+        script_dir = Path(tempfile.gettempdir()) / "prod_cli"
         os.makedirs(script_dir, exist_ok=True)
         return script_dir
 
@@ -414,9 +415,7 @@ class BashScriptGenerator(ShellScriptGenerator):
             if ":" in item:
                 software_name, version = item.split(":", 1)
                 f.write(f"function {software_name}() {{\n")
-                f.write(
-                    f'    rez env {software_name}-{version} -- {software_name} "$@"\n'
-                )
+                f.write(f'    rez env {software_name}-{version} -- {software_name} "$@"\n' )
                 f.write("}\n")
                 f.write(f"export -f {software_name}\n\n")
 
@@ -509,9 +508,9 @@ class EnvironmentManager:
             new_path = existing_path
 
             for path in formatted_paths:
-                norm_path = self._normalize_path(path)
+                norm_path = Path(path).resolve()
                 if existing_path and norm_path not in [
-                    self._normalize_path(p) for p in existing_path.split(separator)
+                    p.resolve() for p in existing_path.split(separator)
                 ]:
                     new_path = f"{path}{separator}{new_path}" if new_path else path
 
@@ -544,36 +543,6 @@ class EnvironmentManager:
             Path separator
         """
         return ";" if platform.system() == "Windows" else ":"
-
-    def _normalize_path(self, path: str) -> str:
-        """
-        Normalize a path for comparison.
-
-        Args:
-            path: Path to normalize
-
-        Returns:
-            Normalized path
-        """
-        return os.path.normpath(path.lower())
-
-    def reset_environment(self) -> None:
-        """
-        Reset the environment to its original state.
-        """
-        # Remove added variables
-        for key in list(self.env_variables.keys()):
-            if key in os.environ:
-                del os.environ[key]
-
-        # Restore original variables
-        for key, value in self.original_env.items():
-            if key not in os.environ and key in self.env_variables:
-                os.environ[key] = value
-
-        self.current_env = os.environ.copy()
-        self.env_variables.clear()
-        self.logger.debug("Reset environment to original state")
 
     def generate_shell_script(self, prod_name: str) -> str:
         """
@@ -616,27 +585,6 @@ class EnvironmentManager:
             return PowerShellScriptGenerator(self.env_variables)
         else:
             return BashScriptGenerator(self.env_variables)
-
-    def apply_environment_to_parent_shell(self, script_path: str) -> None:
-        """
-        Attempt to execute the script in the parent shell to apply environment variables.
-        This is primarily used for testing and debugging, as in most shells
-        this is not possible.
-
-        Args:
-            script_path: Path to the shell script
-        """
-        try:
-            if platform.system() == "Windows":
-                command = f"& '{script_path}'"
-                subprocess.run(["powershell", "-Command", command], check=True)
-            else:
-                command = f"source '{script_path}'"
-                subprocess.run(["bash", "-c", command], check=True)
-
-            self.logger.debug(f"Executed environment script: {script_path}")
-        except subprocess.CalledProcessError as e:
-            self.logger.error(f"Failed to execute environment script: {e}")
 
     def source_interactive_shell(self, script_path: str) -> None:
         """

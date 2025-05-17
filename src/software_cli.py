@@ -7,9 +7,9 @@ import os
 import sys
 from typing import Callable, List, Optional
 
-from src.error_handler import ConfigError, ErrorHandler, RezError
 from src.logger import Logger
 from src.production_environment import ProductionEnvironment
+from src.errors import ConfigError, RezError
 
 
 class SoftwareCLI:
@@ -27,7 +27,6 @@ class SoftwareCLI:
         self.software_name = software_name
         self.parser = self._setup_argument_parser()
         self.logger: Optional[Logger] = None
-        self.error_handler: Optional[ErrorHandler] = None
 
     def _setup_argument_parser(self) -> argparse.ArgumentParser:
         """
@@ -78,7 +77,6 @@ class SoftwareCLI:
 
         log_level = "DEBUG" if parsed_args.verbose else "INFO"
         self.logger = Logger(log_level)
-        self.error_handler = ErrorHandler()
 
         try:
             env = ProductionEnvironment(prod_name)
@@ -92,37 +90,7 @@ class SoftwareCLI:
             return 0
 
         except (ConfigError, RezError) as e:
-            self.error_handler.handle_error(e)
             return 1
-
-
-def create_software_entry_point(software_name: str) -> Callable[[], int]:
-    """
-    Creates an entry point function for a software.
-
-    Args:
-        software_name: Name of the software
-
-    Returns:
-        Entry point function
-    """
-
-    def main() -> int:
-        """
-        Main entry point for the software CLI.
-
-        Returns:
-            Exit code
-        """
-        cli = SoftwareCLI(software_name)
-        return cli.run()
-
-    return main
-
-
-maya_main = create_software_entry_point("maya")
-nuke_main = create_software_entry_point("nuke")
-houdini_main = create_software_entry_point("houdini")
 
 
 if __name__ == "__main__":

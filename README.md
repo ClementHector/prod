@@ -220,7 +220,7 @@ maya --help
 │   ├── cli.py                   # Command line interface
 │   ├── config_manager.py        # Configuration management
 │   ├── environment_manager.py   # Environment variables management
-│   ├── error_handler.py         # Error handling
+│   ├── errors.py                # Error
 │   ├── logger.py                # Logging system
 │   ├── production_environment.py # Production environment management
 │   ├── rez_manager.py           # Rez integration
@@ -263,24 +263,6 @@ prod dlt
 # When done, exit the production environment
 [PROD:dlt]> exit
 ```
-
-## Extending the Tool
-
-To add support for a new software:
-
-1. Add the software to your configuration files.
-2. Add an entry point in setup.py:
-   ```python
-   entry_points={
-       'console_scripts': [
-           'new_software=src.software_cli:create_software_entry_point("new_software")',
-       ],
-   }
-   ```
-3. Reinstall the package:
-   ```bash
-   pip install -e .
-   ```
 
 ## Contributing
 

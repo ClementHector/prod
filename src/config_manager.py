@@ -3,7 +3,6 @@ Configuration management for the Prod CLI tool.
 """
 
 import configparser
-import os
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -28,16 +27,8 @@ class ConfigManager:
         path = Path(config_path)
         if path.exists():
             self.config_parser.read(config_path)
-            self._validate_config()
         else:
             raise FileNotFoundError(f"Configuration file not found: {config_path}")
-
-    def _validate_config(self) -> None:
-        """
-        Validates the loaded configuration.
-        Ensures all required sections and keys exist.
-        """
-        pass
 
     def merge_configs(self, configs: List[str]) -> None:
         """
@@ -54,20 +45,6 @@ class ConfigManager:
                 self.config_parser.read(config)
             else:
                 print(f"Warning: Config file not found: {config}")
-
-    def load_override_config(self, config_path: str) -> None:
-        """
-        Loads an override configuration file.
-        Args:
-            config_path: Path to the override configuration file
-        """
-        path = Path(config_path)
-        if path.exists():
-            self.override_config.read(config_path)
-        else:
-            raise FileNotFoundError(
-                f"Override configuration file not found: {config_path}"
-            )
 
     def get_merged_config(
         self, section: str, key: str, default: Optional[str] = None
@@ -93,19 +70,6 @@ class ConfigManager:
             return default
 
         raise KeyError(f"Configuration key not found: {section}.{key}")
-
-    def apply_temporary_override(self, section: str, key: str, value: str) -> None:
-        """
-        Applies a temporary override for a configuration value.
-
-        Args:
-            section: Configuration section
-            key: Configuration key
-            value: New value
-        """
-        if not self.override_config.has_section(section):
-            self.override_config.add_section(section)
-        self.override_config[section][key] = value
 
     def get_section(self, section: str) -> Dict[str, str]:
         """

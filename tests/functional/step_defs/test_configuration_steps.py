@@ -155,14 +155,6 @@ def check_nuke_packages(config_context):
     assert "neatVideo" in nuke_packages
 
 
-@when("I apply a temporary override to Maya version")
-def apply_override(config_context):
-    """Appliquer un override temporaire à la version de Maya."""
-    config_context["config_manager"].apply_temporary_override(
-        "maya", "version", "2023.4.0"
-    )
-
-
 @then("I should get the overridden Maya version")
 def check_overridden_version(config_context):
     """Vérifier que la version de Maya est celle spécifiée par l'override."""

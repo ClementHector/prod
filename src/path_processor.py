@@ -37,7 +37,7 @@ class PathProcessor:
             )
 
             if is_drive_letter:
-                temp_path = temp_path[: i + 1] + "@" + temp_path[i + 2:]
+                temp_path = temp_path[: i + 1] + "@" + temp_path[i + 2 :]
             i += 1
 
         parts = temp_path.split(":")

@@ -7,8 +7,8 @@ import platform
 import subprocess
 from typing import Dict, List, Optional, Tuple
 
-from src.error_handler import RezError
 from src.logger import get_logger
+from src.errors import RezError
 
 WINDOWS_CREATE_NEW_PROCESS_GROUP = 0x00000200
 
@@ -49,53 +49,6 @@ class RezManager:
                 "Please install Rez or add it to your PATH."
             )
 
-    def create_alias(
-        self,
-        software_name: str,
-        software_version: str,
-        packages: List[str],
-        alias_name: Optional[str] = None,
-    ) -> str:
-        """
-        Creates a Rez alias for a software.
-
-        Args:
-            software_name: Name of the software
-            software_version: Version of the software
-            packages: Additional packages to include
-            alias_name: Name for the alias, defaults to software_name
-
-        Returns:
-            The created alias name
-
-        Raises:
-            RezError: If alias creation fails
-        """
-        if alias_name is None:
-            alias_name = software_name
-
-        rez_command = self._generate_rez_command(
-            software_name, software_version, packages
-        )
-
-        try:
-            subprocess.run(
-                ["rez-bind", "--alias", alias_name, "--command", rez_command],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                check=True,
-            )
-
-            self.logger.info(
-                f"Created Rez alias '{alias_name}' for "
-                f"{software_name}-{software_version}"
-            )
-
-            return alias_name
-        except subprocess.SubprocessError as e:
-            self.logger.error(f"Failed to create Rez alias: {e}")
-            raise RezError(f"Failed to create Rez alias: {e}")
-
     def _generate_rez_command(
         self, software_name: str, software_version: str, packages: List[str]
     ) -> str:
@@ -124,41 +77,6 @@ class RezManager:
 
         command = f"{shell_prefix}rez env {' '.join(package_list)} -- {software_name}"
         return command
-
-    def list_available_packages(self) -> Dict[str, List[str]]:
-        """
-        Lists all available Rez packages.
-
-        Returns:
-            Dictionary of package families and their versions
-        """
-        try:
-            result = subprocess.run(
-                ["rez-search", "--format", "{name} {version}"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                check=True,
-                text=True,
-            )
-
-            packages: Dict[str, List[str]] = {}
-            for line in result.stdout.splitlines():
-                if line.strip():
-                    parts = line.strip().split()
-                    if len(parts) >= 2:
-                        name = parts[0]
-                        version = parts[1]
-
-                        if name not in packages:
-                            packages[name] = []
-
-                        packages[name].append(version)
-
-            return packages
-
-        except subprocess.SubprocessError as e:
-            self.logger.error(f"Failed to list Rez packages: {e}")
-            raise RezError(f"Failed to list Rez packages: {e}")
 
     def execute_with_rez(
         self,
@@ -240,42 +158,3 @@ class RezManager:
         except subprocess.SubprocessError as e:
             self.logger.error(f"Failed to execute command with Rez: {e}")
             raise RezError(f"Failed to execute command with Rez: {e}")
-
-    def launch_software(
-        self, software_name: str, args: List[str] = None
-    ) -> subprocess.Popen:
-        """
-        Launch software using Rez.
-
-        Args:
-            software_name: Name of the software to launch
-            args: Additional command line arguments for the software
-
-        Returns:
-            Popen process object
-
-        Raises:
-            RezError: If software launch fails
-        """
-        if args is None:
-            args = []
-
-        try:
-            # Construct command to run the software
-            cmd = [software_name] + args
-
-            # Launch the software
-            process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-            )
-
-            self.logger.info(f"Launched {software_name} with args: {args}")
-            return process
-
-        except subprocess.SubprocessError as e:
-            error_msg = f"Failed to launch {software_name}: {e}"
-            self.logger.error(error_msg)
-            raise RezError(error_msg)

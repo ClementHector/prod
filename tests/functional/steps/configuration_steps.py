@@ -119,11 +119,6 @@ def step_impl_nuke_required_packages(context):
     assert len(packages) == 2
 
 
-@when("I apply a temporary override to Maya version")
-def step_impl_apply_temp_override(context):
-    context.config_manager.apply_temporary_override("maya", "version", "2024")
-
-
 @then("I should get the overridden Maya version")
 def step_impl_get_overridden_version(context):
     version = context.config_manager.get_merged_config("maya", "version")

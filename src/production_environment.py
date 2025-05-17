@@ -9,7 +9,6 @@ from typing import Dict, List, Optional, cast
 
 from src.config_manager import ConfigManager
 from src.environment_manager import EnvironmentManager
-from src.error_handler import ConfigError
 from src.logger import get_logger
 from src.path_processor import PathProcessor
 from src.rez_manager import RezManager
@@ -338,15 +337,6 @@ class ProductionEnvironment:
         self.env_manager.source_interactive_shell(env_script)
 
         self.logger.debug(f"Exited production environment '{self.prod_name}'")
-
-    def get_env_script_path(self) -> str:
-        """
-        Gets the path to the environment script.
-
-        Returns:
-            Path to the environment script
-        """
-        return self.env_manager.generate_shell_script(self.prod_name)
 
     def get_base_packages(self, software_name: str) -> List[str]:
         """

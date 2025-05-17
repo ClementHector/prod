@@ -181,31 +181,11 @@ PIPELINE_CONFIG=%s/config/studio/pipeline.ini:
         side_effect=lambda vars: prod_env_context["env_variables"].update(vars),
     )
 
-    # Mock for RezManager.create_alias
-    prod_env_context["mock_create_alias"] = mock.patch(
-        "src.rez_manager.RezManager.create_alias",
-        side_effect=lambda sw_name, sw_ver, pkgs, alias_name=None: prod_env_context[
-            "rez_aliases"
-        ].append(
-            {
-                "software": sw_name,
-                "version": sw_ver,
-                "packages": pkgs,
-                "alias": alias_name or sw_name,
-            }
-        ),
-    )
-
     # Mock for RezManager._validate_rez_installation
     prod_env_context["mock_validate_rez"] = mock.patch(
         "src.rez_manager.RezManager._validate_rez_installation"
     )
 
-    # Mock for EnvironmentManager.reset_environment
-    prod_env_context["mock_reset_environment"] = mock.patch(
-        "src.environment_manager.EnvironmentManager.reset_environment",
-        return_value=None,
-    )
 
 
 @when("I activate the production environment")
@@ -214,7 +194,6 @@ def activate_production_env(prod_env_context):
     with (
         prod_env_context["mock_load_config_paths"],
         prod_env_context["mock_set_env_vars"],
-        prod_env_context["mock_create_alias"],
         prod_env_context["mock_validate_rez"],
     ):
 
@@ -397,7 +376,6 @@ def production_env_activated(prod_env_context):
     with (
         prod_env_context["mock_load_config_paths"],
         prod_env_context["mock_set_env_vars"],
-        prod_env_context["mock_create_alias"],
         prod_env_context["mock_validate_rez"],
     ):
 

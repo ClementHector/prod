@@ -86,19 +86,6 @@ def test_merge_configs(config_setup):
     assert config_manager.get_merged_config("section3", "key1") == "new_value"
 
 
-def test_load_override_config(config_setup):
-    """Test loading an override configuration file."""
-    config_manager, base_config_path, override_config_path, _ = config_setup
-
-    config_manager.load_config(base_config_path)
-    config_manager.load_override_config(override_config_path)
-
-    # Check that the override was applied
-    assert config_manager.get_merged_config("section1", "key1") == "value1"
-    assert config_manager.get_merged_config("section1", "key2") == "override_value"
-    assert config_manager.get_merged_config("section3", "key1") == "new_value"
-
-
 def test_get_sections(config_setup):
     """Test getting all sections."""
     config_manager, base_config_path, override_config_path, _ = config_setup

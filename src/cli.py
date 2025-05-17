@@ -7,7 +7,6 @@ import sys
 from pathlib import Path
 from typing import List, Optional
 
-from src.error_handler import ConfigError, ErrorHandler, RezError
 from src.logger import Logger
 from src.production_environment import ProductionEnvironment
 
@@ -23,7 +22,6 @@ class CLI:
         """
         self.parser = self._setup_argument_parser()
         self.logger = None
-        self.error_handler = None
 
     def _setup_argument_parser(self) -> argparse.ArgumentParser:
         """
@@ -63,33 +61,26 @@ class CLI:
 
         is_verbose = "--verbose" in args or "-v" in args
         self.logger = Logger(is_verbose)
-        self.error_handler = ErrorHandler()
 
-        try:
-            known_commands = {"list"}
-            if args[0] in known_commands:
-                parsed_args = self.parser.parse_args(args)
-                if parsed_args.command == "list":
-                    return self._handle_list_command()
-                self.parser.print_help()
-                return 0
-            else:
+        known_commands = {"list"}
+        if args[0] in known_commands:
+            parsed_args = self.parser.parse_args(args)
+            if parsed_args.command == "list":
+                return self._handle_list_command()
+            self.parser.print_help()
+            return 0
+        else:
 
-                class Args(argparse.Namespace):
-                    """Simple namespace to mimic argparse.Namespace."""
+            class Args(argparse.Namespace):
+                """Simple namespace to mimic argparse.Namespace."""
 
-                    pass
+                pass
 
-                enter_args = Args()
-                enter_args.production = args[0]
-                enter_args.verbose = is_verbose
-                return self._handle_enter_command(enter_args)
-        except (ConfigError, RezError) as e:
-            if self.error_handler:
-                self.error_handler.handle_error(e)
-            else:
-                print(f"Error: {e}")
-            return 1
+            enter_args = Args()
+            enter_args.production = args[0]
+            enter_args.verbose = is_verbose
+            return self._handle_enter_command(enter_args)
+
 
     def _handle_list_command(self) -> int:
         """
@@ -134,16 +125,9 @@ class CLI:
         Returns:
             Exit code - 0 for success, 1 for error
         """
-        try:
-            env = ProductionEnvironment(args.production)
-            env.activate()
-            return 0
-        except ConfigError as e:
-            if self.error_handler:
-                self.error_handler.handle_error(e)
-            else:
-                print(f"Error: {e}")
-            return 1
+        env = ProductionEnvironment(args.production)
+        env.activate()
+        return 0
 
 
 def main() -> int:
