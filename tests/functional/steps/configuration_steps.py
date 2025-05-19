@@ -141,6 +141,7 @@ def step_impl_prod_settings_with_mixed_separators(context):
 [environment]
 SOFTWARE_CONFIG=C:\\path\\to\\studio\\software.ini:C:\\path\\to\\prod\\{PROD_NAME}\\config\\software.ini
 PIPELINE_CONFIG=C:\\path\\to\\studio\\pipeline.ini:C:\\path\\to\\prod\\{PROD_NAME}\\config\\pipeline.ini
+TOTO=test
 """
         )
 
@@ -239,10 +240,7 @@ def step_impl_config_paths_correctly_split(context):
 
     # Check that the paths are as expected
     assert context.config_paths["software"][0] == "C:\\path\\to\\studio\\software.ini"
-    assert (
-        context.config_paths["software"][1]
-        == "C:\\path\\to\\prod\\test_prod\\config\\software.ini"
-    )
+    assert (context.config_paths["software"][1] == "C:\\path\\to\\prod\\test_prod\\config\\software.ini")
 
 
 @then("the software configuration should be properly loaded")

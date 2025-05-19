@@ -5,8 +5,6 @@ Unit tests for the interactive functions of EnvironmentManager.
 import os
 from unittest.mock import patch
 
-import pytest
-
 from src.environment_manager import EnvironmentManager
 
 

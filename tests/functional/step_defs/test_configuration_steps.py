@@ -184,14 +184,10 @@ PIPELINE_CONFIG=C:\\path\\to\\studio\\pipeline.ini:/unix/path/pipeline.ini:C:\\p
 @when("I initialize the production environment")
 def initialize_production_environment(config_context, monkeypatch):
     """Initialize the production environment with the mixed path separators."""
-    from src.logger import Logger
-    from src.production_environment import ProductionEnvironment
-
     # Mock the logger
-    logger = Logger()  # Mock Path.exists to always return True
     from pathlib import Path
 
-    original_exists = Path.exists
+    from src.production_environment import ProductionEnvironment
 
     def mock_exists(self):
         return True

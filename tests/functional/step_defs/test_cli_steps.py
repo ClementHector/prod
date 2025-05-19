@@ -13,7 +13,6 @@ import pytest
 from pytest_bdd import given, parsers, scenarios, then, when
 
 from src.cli import CLI
-from src.software_cli import SoftwareCLI
 
 # Import all scenarios from the feature file
 scenarios("../features/cli.feature")
@@ -100,12 +99,11 @@ def valid_production_exists(cli_context, prod_name):
 
 @given(parsers.parse('I am in the "{prod_name}" production environment'))
 def in_production_environment(cli_context, prod_name):
-    """Simulate being in a production environment."""
-    # Save the production name in the context
+    """Simulate being in a production environment."""  # Save the production name in the context
     cli_context["prod_name"] = prod_name
 
     # Mock for os.environ.get to return the production name
-    mock_environ = mock.patch("src.software_cli.os.environ.get", return_value=prod_name)
+    mock_environ = mock.patch("os.environ.get", return_value=prod_name)
     cli_context["mock_environ_get"] = mock_environ
 
     # Create a MagicMock instance for execute_software method
@@ -173,15 +171,15 @@ def run_command(cli_context, command):
 
             if "--env-only" in args:
                 additional_args.append("--env-only")
-                cli_context["env_only"] = True
-
-            # Préparer l'environnement et exécuter avec les mocks
+                cli_context["env_only"] = (
+                    True  # Préparer l'environnement et exécuter avec les mocks
+                )
             with cli_context["mock_environ_get"], cli_context["mock_execute_software"]:
                 # Exécuter la commande
                 with mock.patch("sys.argv", [cmd] + additional_args):
                     # Appel direct pour s'assurer que notre mock est utilisé
-                    cli = SoftwareCLI(cmd)
-                    cli_context["return_code"] = cli.run(additional_args)
+                    cli = CLI()
+                    cli_context["return_code"] = cli.run([cmd] + additional_args)
 
                     # Make sure the mock is called manually if necessary
                     if not cli_context["mock_execute_instance"].called:

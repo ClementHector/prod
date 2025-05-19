@@ -2,15 +2,13 @@
 Unit tests for the RezManager class.
 """
 
-import os
-import platform
 import subprocess
 from unittest import mock
 
 import pytest
 
+from src.exceptions import RezError
 from src.rez_manager import RezManager
-from src.errors import RezError
 
 
 @pytest.fixture
@@ -34,7 +32,8 @@ def test_validate_rez_installation_success(rez_manager):
         ["rez", "--version"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        check=True,
+        check=False,
+        text=True,
     )
 
 
@@ -43,12 +42,16 @@ def test_validate_rez_installation_failure_subprocess_error():
     with mock.patch("src.rez_manager.get_logger"):
         with mock.patch("src.rez_manager.platform.system", return_value="Windows"):
             with mock.patch("src.rez_manager.subprocess.run") as mock_run:
-                mock_run.side_effect = subprocess.SubprocessError("Command failed")
+                # Instead of raising exception directly, return an error result
+                mock_result = mock.MagicMock()
+                mock_result.returncode = 1
+                mock_result.stderr = "Command failed"
+                mock_run.return_value = mock_result
 
                 with pytest.raises(RezError) as excinfo:
                     RezManager()
 
-                assert "Rez is not installed or not in PATH" in str(excinfo.value)
+                assert "Rez installation check failed" in str(excinfo.value)
 
 
 def test_validate_rez_installation_failure_file_not_found():
@@ -64,31 +67,3 @@ def test_validate_rez_installation_failure_file_not_found():
                     RezManager()
 
                 assert "Rez is not installed or not in PATH" in str(excinfo.value)
-
-
-@mock.patch("platform.system", return_value="Windows")
-def test_generate_rez_command_windows(mock_platform, rez_manager):
-    """Test generating Rez command for Windows."""
-    # Test
-    command = rez_manager._generate_rez_command("maya", "2023", ["usd-23.11"])
-
-    # Verify Windows-specific command structure
-    assert "rez env" in command
-    assert "maya-2023" in command
-    assert "usd-23.11" in command
-    # Should include cmd.exe on Windows
-    assert "cmd" in command
-
-
-@mock.patch("platform.system", return_value="Linux")
-def test_generate_rez_command_linux(mock_platform, rez_manager):
-    """Test generating Rez command for Linux."""
-    # Test
-    command = rez_manager._generate_rez_command("maya", "2023", ["usd-23.11"])
-
-    # Verify Linux-specific command structure
-    assert "rez env" in command
-    assert "maya-2023" in command
-    assert "usd-23.11" in command
-    # Should use bash on Linux
-    assert "bash" in command

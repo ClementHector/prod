@@ -96,12 +96,15 @@ def test_handle_enter_command_activates_environment(cli):
         # Create mock args
         args = MagicMock()
         args.production = "test_prod"
+        args.verbose = (
+            False  # Add the verbose parameter to match the new implementation
+        )
 
         # Call the enter command handler
         result = cli._handle_enter_command(args)
 
-        # Check that ProductionEnvironment was created with the production name
-        mock_prod_env.assert_called_once_with("test_prod")
+        # Check that ProductionEnvironment was created with the production name and verbose flag
+        mock_prod_env.assert_called_once_with("test_prod", verbose=False)
 
         # Check that activate was called
         mock_env.activate.assert_called_once()

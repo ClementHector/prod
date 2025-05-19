@@ -2,12 +2,10 @@
 Unit tests for the environment activation function.
 """
 
-import tempfile
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.logger import Logger
 from src.production_environment import ProductionEnvironment
 
 
@@ -30,15 +28,11 @@ def mock_environment():
     mock_env_manager = patch("src.production_environment.EnvironmentManager")
     # Start the patches
     mock_load_started = mock_load.start()
-    mock_software_started = mock_software.start()
-    mock_pipeline_started = mock_pipeline.start()
-    mock_env_manager_started = mock_env_manager.start()
 
     # Configure mock return values
     mock_load_started.return_value = {"software": [], "pipeline": []}
 
     # Crée l'environnement de production avec les mocks
-    logger = MagicMock(spec=Logger)
     prod_env = ProductionEnvironment("test_prod")
 
     # Prépare les données de test pour la liste des logiciels
@@ -63,14 +57,13 @@ def test_activate_passes_software_list_to_generate_script(mock_environment):
     """
     Test that activate() method correctly passes software list to
     generate_interactive_shell_script.
-    """
+    """  # Create a MagicMock for the env_manager
+    mock_environment.env_manager = MagicMock()
+
     # Configure mock to return a script path
     mock_environment.env_manager.generate_interactive_shell_script.return_value = (
         "/path/to/script.sh"
     )
-
-    # Configure source_interactive_shell to do nothing
-    mock_environment.env_manager.source_interactive_shell = MagicMock()
 
     # Activate the environment
     mock_environment.activate()

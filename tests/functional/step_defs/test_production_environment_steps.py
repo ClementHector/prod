@@ -187,7 +187,6 @@ PIPELINE_CONFIG=%s/config/studio/pipeline.ini:
     )
 
 
-
 @when("I activate the production environment")
 def activate_production_env(prod_env_context):
     """Activate the production environment."""
@@ -203,10 +202,9 @@ def activate_production_env(prod_env_context):
             # Store the software list in the context for verification
             if software_list:
                 prod_env_context["software_list"] = software_list
-            return "/tmp/mock_interactive.sh"
+            return "/tmp/mock_interactive.sh"  # Patch the source_interactive_shell method to avoid real execution
 
-        # Patch the source_interactive_shell method to avoid real execution
-        def mock_source_interactive_shell(self, script_path):
+        def mock_source_interactive_shell(self, script_path, verbose=False):
             return
 
         # Apply the patches
@@ -295,7 +293,6 @@ def check_env_variables(prod_env_context):
     assert "PROD_ROOT" in prod_env_context["env_variables"]
     assert "PROD_TYPE" in prod_env_context["env_variables"]
 
-    # Check for assets and shots env variables (case insensitive)
     env_vars = {k.upper(): v for k, v in prod_env_context["env_variables"].items()}
     assert "DLT_ASSETS" in env_vars
     assert "DLT_SHOTS" in env_vars

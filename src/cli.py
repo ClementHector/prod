@@ -36,9 +36,22 @@ class CLI:
         parser.add_argument(
             "--verbose", "-v", action="store_true", help="Verbose output"
         )
-
         subparsers = parser.add_subparsers(dest="command", help="Command to execute")
         subparsers.add_parser("list", help="List available productions")
+
+        launch_parser = subparsers.add_parser(
+            "launch", help="Launch software from a production"
+        )
+        launch_parser.add_argument("software", help="Software to launch")
+        launch_parser.add_argument("--prod", required=True, help="Production name")
+        launch_parser.add_argument(
+            "--packages", nargs="+", help="Additional packages to include"
+        )
+        launch_parser.add_argument(
+            "--env-only",
+            action="store_true",
+            help="Enter environment only without launching",
+        )
 
         return parser
 
@@ -62,25 +75,20 @@ class CLI:
         is_verbose = "--verbose" in args or "-v" in args
         self.logger = Logger(is_verbose)
 
-        known_commands = {"list"}
+        known_commands = {"list", "launch"}
         if args[0] in known_commands:
             parsed_args = self.parser.parse_args(args)
             if parsed_args.command == "list":
                 return self._handle_list_command()
+            elif parsed_args.command == "launch":
+                return self._handle_launch_command(parsed_args)
             self.parser.print_help()
             return 0
-        else:
 
-            class Args(argparse.Namespace):
-                """Simple namespace to mimic argparse.Namespace."""
-
-                pass
-
-            enter_args = Args()
-            enter_args.production = args[0]
-            enter_args.verbose = is_verbose
-            return self._handle_enter_command(enter_args)
-
+        enter_args = argparse.Namespace()
+        enter_args.production = args[0]
+        enter_args.verbose = is_verbose
+        return self._handle_enter_command(enter_args)
 
     def _handle_list_command(self) -> int:
         """
@@ -125,9 +133,39 @@ class CLI:
         Returns:
             Exit code - 0 for success, 1 for error
         """
-        env = ProductionEnvironment(args.production)
-        env.activate()
-        return 0
+        try:
+            env = ProductionEnvironment(args.production, verbose=args.verbose)
+            env.activate()
+            return 0
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Failed to enter production {args.production}: {e}")
+            else:
+                print(f"Failed to enter production {args.production}: {e}")
+            return 1
+
+    def _handle_launch_command(self, args: argparse.Namespace) -> int:
+        """
+        Handles the launch command.
+
+        Args:
+            args: Command line arguments
+
+        Returns:
+            Exit code - 0 for success, 1 for error
+        """
+        try:
+            env = ProductionEnvironment(args.prod, verbose=args.verbose)
+            self.logger.info(f"Launching {args.software} from production {args.prod}")
+            additional_packages = args.packages if hasattr(args, "packages") else None
+            env_only = args.env_only if hasattr(args, "env_only") else False
+            env.execute_software(
+                args.prod, args.software, additional_packages, env_only, background=True
+            )
+            return 0
+        except Exception as e:
+            self.logger.error(f"Failed to launch {args.software}: {e}")
+            return 1
 
 
 def main() -> int:

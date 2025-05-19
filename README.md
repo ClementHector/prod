@@ -223,8 +223,7 @@ maya --help
 │   ├── errors.py                # Error
 │   ├── logger.py                # Logging system
 │   ├── production_environment.py # Production environment management
-│   ├── rez_manager.py           # Rez integration
-│   └── software_cli.py          # Software-specific CLI
+│   └── rez_manager.py           # Rez integration
 │
 ├── setup.py                     # Package setup script
 └── README.md                    # This file

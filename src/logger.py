@@ -1,71 +1,68 @@
 """
 Logging system for the Prod CLI tool.
+
+This module provides a centralized logging system with a singleton-based
+approach to ensure consistent logging across the application.
 """
 
 import logging
-from typing import Optional
 
-LoggerName = "prod"
-
-
-def get_logger() -> logging.Logger:
-    """
-    Returns the logger instance.
-
-    Returns:
-        Logger instance
-    """
-    return logging.getLogger(LoggerName)
+LOGGER_NAME = "prod"
+_logger_instance = None
 
 
 class Logger:
     """
     Handles logging functionality with support for multiple verbosity levels.
-    Uses the default Python logging system with simplified format.
+
+    This class implements a singleton pattern to ensure only one logger instance
+    exists throughout the application. It uses the standard Python logging system
+    with simplified formatting.
     """
 
-    def __init__(self, verbose: Optional[bool] = False):
+    def __init__(self, verbose: bool = False) -> None:
         """
         Initializes the logger with the specified verbosity level.
 
         Args:
-            verbose: Whether to enable verbose logging.
-
+            verbose: Whether to enable verbose logging (DEBUG level)
         """
-        log_level = "DEBUG" if verbose else "INFO"
+        log_level = logging.DEBUG if verbose else logging.INFO
         self._logger = self._setup_logger(log_level)
 
     @property
-    def logger(self):
+    def logger(self) -> logging.Logger:
         """
         Access to the internal logger object.
 
         Returns:
-            Internal logger instance
+            The internal logger instance
         """
         return self._logger
 
-    def _setup_logger(self, log_level: str):
+    def _setup_logger(self, log_level: int) -> logging.Logger:
         """
         Sets up the logging system with simplified output.
 
         Args:
-            log_level: Logging level
+            log_level: Logging level as an integer (e.g., logging.DEBUG)
 
         Returns:
             Configured logger instance
         """
-        logger = logging.getLogger(LoggerName)
+        logger = logging.getLogger(LOGGER_NAME)
 
         if logger.handlers:
             logger.handlers.clear()
 
-        logger.setLevel(getattr(logging, log_level))
+        logger.setLevel(log_level)
 
         formatter = logging.Formatter("%(message)s")
         console_handler = logging.StreamHandler()
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
+
+        logger.propagate = False
 
         return logger
 
@@ -114,11 +111,44 @@ class Logger:
         """
         self._logger.critical(message)
 
-    def set_log_level(self, log_level: str) -> None:
+    def set_log_level(self, level: str) -> None:
         """
-        Set the log level.
+        Set the logging level.
 
         Args:
-            log_level: New log level
+            level: Logging level as string (e.g., "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")
         """
-        self._logger.setLevel(getattr(logging, log_level))
+        if hasattr(logging, level):
+            self._logger.setLevel(getattr(logging, level))
+
+
+def get_logger() -> logging.Logger:
+    """
+    Returns the singleton logger instance.
+
+    This function ensures that only one logger instance is created
+    and used throughout the application.
+
+    Returns:
+        Logger instance
+    """
+    global _logger_instance
+
+    if _logger_instance is None:
+        _logger_instance = Logger()
+
+    return _logger_instance.logger
+
+
+def configure_logger(verbose: bool = False) -> None:
+    """
+    Configure the singleton logger with specified verbosity level.
+
+    This function should be called early in the application startup
+    to configure the logger before it's used elsewhere.
+
+    Args:
+        verbose: Whether to enable verbose logging (DEBUG level)
+    """
+    global _logger_instance
+    _logger_instance = Logger(verbose)
