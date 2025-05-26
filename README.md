@@ -62,15 +62,18 @@ All configuration files use the INI format for consistency and better parsing ca
 Managed by Supervisors and Technical Directors, defines software versions and their required plugins:
 
 ```ini
-[maya]
-version=2023.3.2
-packages = ["mtoa-2.3", "golaem-4"]
+[maya] # alias name
+software=maya # package name
+version=2023.3.2 # package version
+packages = ["mtoa-2.3", "golaem-4"] # additional packages
 
 [nuke]
+software=nuke
 version = 12.3
 packages = ["ofxSuperResolution", "neatVideo"]
 
 [nuke-13]
+software=nuke
 version = 13.2
 packages = ["ofxSuperResolution", "neatVideo"]
 ```
@@ -79,11 +82,11 @@ packages = ["ofxSuperResolution", "neatVideo"]
 Managed by Technical Directors, defines packages used for different software:
 
 ```ini
-[common]
+[common] # for all sofware
 packages = ["vfxCore-2.5"]
 
-[maya]
-packages = ["vfxMayaTools-2.3"]
+[maya] # alias
+packages = ["vfxMayaTools-2.3"] # additional pipeline package for the alias
 
 [nuke]
 packages = ["vfxNukeTools-2.1"]

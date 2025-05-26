@@ -160,7 +160,7 @@ class CLI:
             additional_packages = args.packages if hasattr(args, "packages") else None
             env_only = args.env_only if hasattr(args, "env_only") else False
             env.execute_software(
-                args.prod, args.software, additional_packages, env_only, background=True
+                args.software, additional_packages, env_only, background=False
             )
             return 0
         except Exception as e:

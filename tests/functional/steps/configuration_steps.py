@@ -28,14 +28,17 @@ def step_impl_studio_config_exists(context):
         f.write(
             """
 [maya]
+software=maya
 version = 2022
 packages = ["mayaUSD", "mtoa"]
 
 [nuke]
+software=nuke
 version = 13.0
 packages = ["neatvideo", "cryptomatte"]
 
 [houdini]
+software=houdini
 version = 19.0
 packages = ["redshift", "karma"]
 """
@@ -50,10 +53,12 @@ def step_impl_prod_config_exists(context):
         f.write(
             """
 [maya]
+software=maya
 version = 2023
 packages = ["golaem", "mtoa"]
 
 [nuke]
+software=nuke
 packages = ["superStereo", "neatvideo"]
 
 [common]
@@ -164,10 +169,12 @@ TOTO=test
         f.write(
             """
 [maya]
+software=maya
 version = 2022
 packages = ["mayaUSD", "mtoa"]
 
 [nuke]
+software=nuke
 version = 13.0
 packages = ["neatvideo", "cryptomatte"]
 """
@@ -187,6 +194,7 @@ packages = ["neatvideo", "cryptomatte"]
         f.write(
             """
 [maya]
+software=maya
 version = 2023
 packages = ["golaem", "mtoa"]
 """

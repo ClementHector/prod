@@ -421,7 +421,7 @@ class PowerShellSoftwareAliasWriter(SoftwareAliasWriter):
         # Add verbose mode handling
         file.write("    $verboseFlag = ''\n")
         file.write("    if ($script:VERBOSE) {\n")
-        file.write(f'        Write-Host "Launching {software_name} with the command `{self._command(software_name)}`" -ForegroundColor Cyan\n')
+        file.write(f'        Write-Host "Launching {software_name} with the command {self._command(software_name)}" -ForegroundColor Cyan\n')
         file.write("        $verboseFlag = '-v'\n")
         file.write("    }\n\n")
 
@@ -483,25 +483,15 @@ class PowerShellWelcomeMessageWriter(WelcomeMessageWriter):
         software_items = kwargs["software_items"]
 
         file.write(f"$env:prodName = '{prod_name}'\n")
-        file.write(
-            'Write-Host "==========================================" -ForegroundColor Cyan\n'
-        )
-        file.write(
-            'Write-Host "PRODUCTION ENVIRONMENT ACTIVATED: " -NoNewline -ForegroundColor Cyan\n'
-        )
+        file.write('Write-Host "==========================================" -ForegroundColor Cyan\n')
+        file.write('Write-Host "PRODUCTION ENVIRONMENT ACTIVATED: " -NoNewline -ForegroundColor Cyan\n')
         file.write(f'Write-Host "{prod_name}" -ForegroundColor Green\n')
-        file.write(
-            'Write-Host "==========================================" -ForegroundColor Cyan\n'
-        )
-        file.write(
-            "Write-Host \"Type 'exit' to leave the production environment`n\" -ForegroundColor DarkGray\n\n"
-        )
+        file.write('Write-Host "==========================================" -ForegroundColor Cyan\n')
+        file.write("Write-Host \"Type 'exit' to leave the production environment`n\" -ForegroundColor DarkGray\n\n")
         file.write('Write-Host "Available Software Tools:" -ForegroundColor Cyan\n')
 
         if not software_items:
-            file.write(
-                'Write-Host "No software configured for this production" -ForegroundColor Yellow\n'
-            )
+            file.write('Write-Host "No software configured for this production" -ForegroundColor Yellow\n')
 
         for item in software_items:
             if ":" in item:
@@ -668,7 +658,7 @@ class BashSoftwareAliasWriter(SoftwareAliasWriter):
         file.write(f'    cmd="{self._command(software_name)}"\n')
         file.write('    local verboseFlag=""\n')
         file.write('    if [ "$VERBOSE" = "1" ]; then\n')
-        file.write(f'        echo "Launching {software_name} with the command ``{self._command(software_name)}``" >&2\n')
+        file.write(f'        echo "Launching {software_name} with the command {self._command(software_name)}" >&2\n')
         file.write('        verboseFlag="-v"\n')
         file.write('    fi\n\n')
         file.write(f'    {self._command(software_name)} "$@"\n')
@@ -863,6 +853,7 @@ class EnvironmentManager:
             script_path: Path to the interactive shell script
             verbose: Whether to enable verbose mode
         """
+
         try:
             self.logger.debug(f"Starting interactive shell with script: {script_path}")
 

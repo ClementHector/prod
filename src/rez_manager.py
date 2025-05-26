@@ -58,12 +58,11 @@ class RezCommandBuilder:
         return rez_command
 
 
-class ProcessExecutor(ABC):
+class ProcessExecutor():
     """
     Abstract base class for executing processes in different environments.
     """
 
-    @abstractmethod
     def execute(
         self, command: List[str], background: bool = False
     ) -> Tuple[int, str, str]:
@@ -80,108 +79,12 @@ class ProcessExecutor(ABC):
         Raises:
             RezError: If execution fails
         """
-        pass
-
-
-class WindowsProcessExecutor(ProcessExecutor):
-    """
-    Process executor implementation for Windows systems.
-    """
-
-    def execute(
-        self, command: List[str], background: bool = False
-    ) -> Tuple[int, str, str]:
-        """
-        Execute a command on Windows.
-
-        Args:
-            command: Command parts to execute
-            background: Whether to run the command in the background
-
-        Returns:
-            Tuple of (return code, stdout, stderr)
-
-        Raises:
-            RezError: If execution fails
-        """
         try:
-            if background:
-                creationflags_value = getattr(
-                    subprocess,
-                    "CREATE_NEW_PROCESS_GROUP",
-                    WINDOWS_CREATE_NEW_PROCESS_GROUP,
-                )
-
-                cmd_parts = ["start", "/b"] + [str(arg) for arg in command]
-                cmd_str = " ".join(cmd_parts)
-
-                subprocess.Popen(
-                    cmd_str,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    creationflags=creationflags_value,
-                    shell=True,
-                )
-                return 0, "", ""
-            else:
-                result = subprocess.run(
-                    command,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    check=False,  # Don't raise exception on non-zero exit code
-                )
-                return result.returncode, result.stdout, result.stderr
-
+            result = subprocess.Popen(command, shell=True)
+            return result.returncode, result.stdout, result.stderr
         except subprocess.SubprocessError as e:
-            raise RezError(f"Failed to execute command on Windows: {e}")
+            raise RezError(f"Failed to execute command: {e}")
 
-
-class UnixProcessExecutor(ProcessExecutor):
-    """
-    Process executor implementation for Unix-like systems.
-    """
-
-    def execute(
-        self, command: List[str], background: bool = False
-    ) -> Tuple[int, str, str]:
-        """
-        Execute a command on Unix-like systems.
-
-        Args:
-            command: Command parts to execute
-            background: Whether to run the command in the background
-
-        Returns:
-            Tuple of (return code, stdout, stderr)
-
-        Raises:
-            RezError: If execution fails
-        """
-        try:
-            if background:
-                # For background processes on Unix, use process groups
-                # to ensure they don't get terminated when the parent exits
-                subprocess.Popen(
-                    command,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    preexec_fn=os.setsid if hasattr(os, "setsid") else None,
-                    text=True,
-                )
-                return 0, "", ""
-            else:
-                result = subprocess.run(
-                    command,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    check=False,  # Don't raise exception on non-zero exit code
-                )
-                return result.returncode, result.stdout, result.stderr
-
-        except subprocess.SubprocessError as e:
-            raise RezError(f"Failed to execute command on Unix: {e}")
 
 
 class RezManager:
@@ -207,11 +110,7 @@ class RezManager:
         self.system = platform.system()
         self.command_builder = RezCommandBuilder(verbose)
 
-        # Select appropriate process executor based on platform
-        if self.system == "Windows":
-            self.process_executor = WindowsProcessExecutor()
-        else:
-            self.process_executor = UnixProcessExecutor()
+        self.process_executor = ProcessExecutor()
 
         self._validate_rez_installation()
 
@@ -272,7 +171,6 @@ class RezManager:
         package_list = [f"{software_name}-{software_version}"]
         package_list.extend(packages)
 
-        # Build the Rez command
         rez_command = self.command_builder.build_env_command(
             packages=package_list,
             command=command if not env_only else None,

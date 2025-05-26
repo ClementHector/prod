@@ -8,7 +8,6 @@ approach to ensure consistent logging across the application.
 import logging
 
 LOGGER_NAME = "prod"
-_logger_instance = None
 
 
 class Logger:
@@ -132,12 +131,7 @@ def get_logger() -> logging.Logger:
     Returns:
         Logger instance
     """
-    global _logger_instance
-
-    if _logger_instance is None:
-        _logger_instance = Logger()
-
-    return _logger_instance.logger
+    return logging.getLogger(LOGGER_NAME)
 
 
 def configure_logger(verbose: bool = False) -> None:
@@ -150,5 +144,7 @@ def configure_logger(verbose: bool = False) -> None:
     Args:
         verbose: Whether to enable verbose logging (DEBUG level)
     """
-    global _logger_instance
-    _logger_instance = Logger(verbose)
+
+    logger = logging.getLogger(LOGGER_NAME)
+    logger.setLevel(logging.DEBUG if verbose else logging.INFO)
+

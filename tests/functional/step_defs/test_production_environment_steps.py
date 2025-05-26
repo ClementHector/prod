@@ -95,25 +95,27 @@ packages = ["vfxHoudiniTools-1.5"]
 STUDIO_ROOT=/s/studio
 TOOLS_ROOT=/s/studio/tools
 """
-        )
-
-    # Create the production configuration files
+        )    # Create the production configuration files
     with open(os.path.join(prod_dir, "software.ini"), "w") as f:
         f.write(
             """
 [maya]
+software=maya
 version=2023.3.2
 packages = ["mtoa-2.3", "golaem-4"]
 
 [nuke]
+software=nuke
 version = 12.3
 packages = ["ofxSuperResolution", "neatVideo"]
 
 [nuke-13]
+software=nuke
 version = 13.2
 packages = ["ofxSuperResolution", "neatVideo"]
 
 [houdini]
+software=houdini
 version = 19.5
 packages = ["redshift-3.5.14"]
 """

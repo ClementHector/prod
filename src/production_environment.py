@@ -36,6 +36,30 @@ class SoftwareConfig:
         self.config_manager = config_manager
         self.logger = get_logger()
 
+    def get_software_name(self, software_alias: str) -> str:
+        """
+        Get the actual software name for a software alias.
+
+        Args:
+            software_alias: Alias of the software (section name in config)
+
+        Returns:
+            Actual software name to use with Rez
+
+        Raises:
+            ConfigError: If software is not configured
+        """
+        self._validate_software_exists(software_alias)
+
+        try:
+            return self.config_manager.get_merged_config(software_alias, "software")
+        except ConfigError:
+            # Fall back to using the alias as the software name for backward compatibility
+            self.logger.warning(
+                f"No 'software' parameter found for '{software_alias}', using alias as software name"
+            )
+            return software_alias
+
     def get_software_version(self, software_name: str) -> str:
         """
         Get the configured version for a software.
@@ -381,14 +405,13 @@ class ProductionEnvironment:
             [pkg.split("-")[0] for pkg in override_packages]
         )
         base_packages_without_overrides = [
-            p for p in base_packages if not p.startswith(override_packages_names[0])
+            p for p in base_packages if not p.startswith(override_packages_names)
         ]
         return list(base_packages_without_overrides + override_packages)
 
     def execute_software(
         self,
-        production_name: str,
-        software_name: str,
+        software_alias: str,
         additional_packages: Optional[List[str]] = None,
         env_only: bool = False,
         background: bool = False,
@@ -397,8 +420,7 @@ class ProductionEnvironment:
         Executes a software application.
 
         Args:
-            production_name: Name of the production (unused in current logic, but kept for signature)
-            software_name: Name of the software
+            software_alias: Alias of the software (section name in config)
             additional_packages: Additional packages to include, overriding base packages
             env_only: If True, only enter the environment without executing the software
             background: If True, run the software in the background
@@ -410,17 +432,15 @@ class ProductionEnvironment:
             additional_packages = []
 
         try:
-            version = self.software_config.get_software_version(software_name)
-            base_pkgs = self.get_base_packages(software_name)
+            software_name = self.software_config.get_software_name(software_alias)
+            version = self.software_config.get_software_version(software_alias)
+            base_pkgs = self.get_base_packages(software_alias)
 
             packages = self._merge_packages(base_pkgs, additional_packages)
 
             return_code, _, stderr = self.rez_manager.execute_with_rez(
                 software_name, version, packages, software_name, env_only, background
             )
-
-            if return_code != 0 and self.logger:
-                self.logger.error(f"Failed to execute {software_name}: {stderr}")
 
         except ConfigError as e:
             self.logger.error(f"Failed to execute {software_name}: {e}")
