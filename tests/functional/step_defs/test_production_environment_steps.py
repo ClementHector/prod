@@ -147,7 +147,7 @@ DLT_SHOTS=/s/prods/dlt/shots
 
     # Create the production settings file
     temp_dir = prod_env_context["temp_dir"].name
-    with open(os.path.join(config_dir, "prod-settings.ini"), "w") as f:
+    with open(os.path.join(config_dir, "settings.ini"), "w") as f:
         f.write(
             """
 [environment]

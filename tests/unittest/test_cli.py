@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.cli import CLI
+from src.cli import PRODUCTIONCLI
 from src.logger import Logger
 
 
@@ -18,7 +18,7 @@ def cli():
     Returns:
         CLI instance
     """
-    return CLI()
+    return PRODUCTIONCLI()
 
 
 @pytest.fixture

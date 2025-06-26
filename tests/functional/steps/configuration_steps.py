@@ -134,12 +134,12 @@ def step_impl_get_overridden_version(context):
     assert version == "2024"
 
 
-@given("a prod-settings.ini file with mixed path separators")
+@given("a settings.ini file with mixed path separators")
 def step_impl_prod_settings_with_mixed_separators(context):
     context.temp_dir = tempfile.TemporaryDirectory()
 
     # Create settings file
-    context.settings_path = os.path.join(context.temp_dir.name, "prod-settings.ini")
+    context.settings_path = os.path.join(context.temp_dir.name, "settings.ini")
     with open(context.settings_path, "w") as f:
         f.write(
             """
@@ -360,7 +360,7 @@ def check_path_separators(context):
     # Create a test config with Windows paths but Unix separator and vice versa
     with tempfile.TemporaryDirectory() as temp_dir:
         # Create a settings file with mixed separators
-        settings_path = os.path.join(temp_dir, "prod-settings.ini")
+        settings_path = os.path.join(temp_dir, "settings.ini")
         with open(settings_path, "w") as f:
             f.write(
                 "[environment]\n"

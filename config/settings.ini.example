@@ -1,0 +1,4 @@
+[environment]
+SOFTWARE_CONFIG=/path/to/studio/software.ini:/path/to/prods/{PROD_NAME}/config/software.ini
+PIPELINE_CONFIG=/path/to/studio/pipeline.ini:/path/to/prods/{PROD_NAME}/config/pipeline.ini
+PROD_DIR=/path/to/prods

@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 from pytest_bdd import given, parsers, scenarios, then, when
 
-from src.cli import CLI
+from src.cli import PRODUCTIONCLI
 
 # Import all scenarios from the feature file
 scenarios("../features/cli.feature")
@@ -147,7 +147,7 @@ def run_command(cli_context, command):
                 with contextlib.ExitStack() as stack:
                     for m in mocks:
                         stack.enter_context(m)
-                    cli = CLI()
+                    cli = PRODUCTIONCLI()
                     cli_context["return_code"] = cli.run(args)
 
             # Capturer la sortie
@@ -178,7 +178,7 @@ def run_command(cli_context, command):
                 # Exécuter la commande
                 with mock.patch("sys.argv", [cmd] + additional_args):
                     # Appel direct pour s'assurer que notre mock est utilisé
-                    cli = CLI()
+                    cli = PRODUCTIONCLI()
                     cli_context["return_code"] = cli.run([cmd] + additional_args)
 
                     # Make sure the mock is called manually if necessary

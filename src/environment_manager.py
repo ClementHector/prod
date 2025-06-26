@@ -100,6 +100,18 @@ class SoftwareAliasWriter(ScriptWriter):
         if "prod_name" not in kwargs:
             raise EnvironmentError("Production name is required for software aliases")
 
+    def _get_prod_launch_path(self) -> str:
+        """
+        Get the path to the prod-launch script.
+
+        Returns:
+            Path to the prod-launch script
+        """
+        prod_launch_path = Path(__file__).parent.parent / "prod-launch.py"
+        if not prod_launch_path.exists():
+            raise EnvironmentError(f"prod-launch.py script not found at {prod_launch_path}")
+        return str(prod_launch_path)
+
     def _command(self, software_name: str) -> str:
         """
         Generate the command for launching the software.
@@ -110,7 +122,7 @@ class SoftwareAliasWriter(ScriptWriter):
         Returns:
             Command string
         """
-        return f"python prod.py launch {software_name} --prod {self.prod_name}"
+        return f"python {self._get_prod_launch_path()} {software_name} --prod {self.prod_name}"
 
 
 class WelcomeMessageWriter(ScriptWriter):

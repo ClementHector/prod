@@ -2,6 +2,5 @@
 max-line-length = 90
 exclude = .git,__pycache__,build,dist
 ignore =
-    # Tolérer les f-strings sans placeholders
     F541,
     E501,

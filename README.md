@@ -19,7 +19,7 @@ A Python-based CLI tool designed to streamline and manage production environment
 
 ```bash
 # List available productions
-prod list
+prod --list
 
 * dlt
 * prod1
@@ -128,9 +128,6 @@ prod dlt
 # Run Maya with specific package overrides
 maya --packages golaem-6.3
 
-# Get help
-maya --help
-
 # Available options:
 --packages    Add or override packages
 --env-only    Enter in rez environment without opening the DCC
@@ -154,7 +151,7 @@ maya --help
 2. Configure the production paths in the tool's configuration file:
    ```bash
    # Copy the example configuration
-   cp config/prod-settings.ini.example config/prod-settings.ini
+   cp config/settings.ini.example config/settings.ini
    # Edit the configuration with your studio paths
    ```
 
@@ -169,7 +166,7 @@ maya --help
 
 ## Usage
 
-1. Update your config/prod-settings.ini to point to your configuration files:
+1. Update your config/settings.ini to point to your configuration files:
    ```ini
    [environment]
    SOFTWARE_CONFIG=/path/to/studio/software.ini:/path/to/prods/{PROD_NAME}/config/software.ini
@@ -204,8 +201,8 @@ maya --help
 /
 ├── config/                      # Configuration files
 │   ├── error_messages.json      # Custom error messages
-│   ├── prod-settings.ini        # Tool settings (paths to configs)
-│   ├── prod-settings.ini.example # Example settings file
+│   ├── settings.ini             # Tool settings (paths to configs)
+│   ├── settings.ini.example     # Example settings file
 │   ├── studio/                  # Studio-wide configuration
 │   │   ├── pipeline.ini         # Studio Pipeline configuration
 │   │   └── software.ini         # Studio Software configuration

@@ -162,11 +162,11 @@ def check_overridden_version(config_context):
     assert maya_version == "2023.4.0"
 
 
-@given("a prod-settings.ini file with mixed path separators")
+@given("a settings.ini file with mixed path separators")
 def prod_settings_with_mixed_separators(config_context):
-    """Create a prod-settings.ini file with mixed path separators."""
-    # Create the prod-settings.ini file
-    settings_path = os.path.join(config_context["temp_dir"].name, "prod-settings.ini")
+    """Create a settings.ini file with mixed path separators."""
+    # Create the settings.ini file
+    settings_path = os.path.join(config_context["temp_dir"].name, "settings.ini")
 
     with open(settings_path, "w") as f:
         f.write(
@@ -194,11 +194,11 @@ def initialize_production_environment(config_context, monkeypatch):
 
     monkeypatch.setattr(Path, "exists", mock_exists)
 
-    # Mock path joining for prod-settings.ini
+    # Mock path joining for settings.ini
     original_joinpath = Path.joinpath
 
     def mock_joinpath(self, *args):
-        if args and "prod-settings.ini" in str(args[-1]):
+        if args and "settings.ini" in str(args[-1]):
             return Path(config_context["settings_path"])
         return original_joinpath(self, *args)
 
@@ -208,7 +208,7 @@ def initialize_production_environment(config_context, monkeypatch):
     monkeypatch.setattr(os.path, "exists", lambda path: True)
 
     def mock_path_join(*args):
-        if args and "prod-settings.ini" in args[-1]:
+        if args and "settings.ini" in args[-1]:
             return config_context["settings_path"]
         # Use the real os.path.join for other cases, but avoiding recursion
         return os.path.normpath("/".join(args))

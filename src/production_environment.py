@@ -232,7 +232,7 @@ class ProductionEnvironment:
         Returns:
             Path to the settings file
         """
-        return Path(__file__).parent.joinpath("../config/prod-settings.ini").resolve()
+        return Path(__file__).parent.joinpath("../config/settings.ini").resolve()
 
     def _expand_paths(self, paths: str) -> List[str]:
         """
@@ -296,16 +296,30 @@ class ProductionEnvironment:
             SoftwareConfig instance
         """
         config_manager = ConfigManager()
+        config_paths = self._get_software_config_paths()
+        if not config_paths:
+            raise ConfigError("No software configuration files found")
 
         for config_path in self.config_paths["software"]:
-            path = Path(config_path)
-            if path.exists():
-                self.logger.debug(f"Loading software config: {config_path}")
-                config_manager.load_config(config_path)
-            else:
-                self.logger.warning(f"Software config not found: {config_path}")
+            config_manager.load_config(config_path)
 
         return SoftwareConfig(config_manager)
+
+    def _get_software_config_paths(self) -> list[Path]:
+        """
+        Gets the paths to the software configuration files.
+
+        Returns:
+            List of Paths to software configuration files
+        """
+        config_paths = []
+        for config_path in self.config_paths["software"]:
+            path = Path(config_path)
+            if not path.exists():
+                self.logger.warning(f"Software config not found: {config_path}")
+            else:
+                config_paths.append(path)
+        return config_paths
 
     def _parse_pipeline_config(self) -> PipelineConfig:
         """

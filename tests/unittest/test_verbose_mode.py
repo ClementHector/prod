@@ -48,21 +48,21 @@ def test_rez_manager_execute_with_verbose():
             with mock.patch("src.rez_manager.subprocess.run") as mock_run:
                 # Mock successful rez validation
                 mock_run.return_value = mock.MagicMock(returncode=0)
-                mock_process = mock.MagicMock()
-                mock_process.returncode = 0
-                mock_process.stdout = b"Test output"
-                mock_process.stderr = b""
-                mock_run.return_value = mock_process
 
-                # Create manager with verbose=True
-                manager = RezManager(verbose=True)
+                # Mock the ProcessExecutor.execute method to capture the command
+                with mock.patch("src.rez_manager.ProcessExecutor.execute") as mock_execute:
+                    mock_execute.return_value = (0, "Test output", "")
 
-                # Execute with rez
-                manager.execute_with_rez("maya", "2023", [], "maya.exe")
+                    # Create manager with verbose=True
+                    manager = RezManager(verbose=True)
 
-                # Check that -v flag was included in the command
-                args, _ = mock_run.call_args
-                assert "-v" in args[0]
+                    # Execute with rez
+                    manager.execute_with_rez("maya", "2023", [], "maya.exe")
+
+                    # Check that -v flag was included in the command
+                    args, _ = mock_execute.call_args
+                    command = args[0]
+                    assert "-v" in command
 
 
 def test_environment_manager_interactive_shell_verbose_windows():
@@ -137,9 +137,14 @@ def test_production_environment_passes_verbose_flag():
                         with mock.patch(
                             "src.production_environment.RezManager"
                         ) as mock_rez_manager:
-                            # Create instance with verbose=True
+                            # Import ProductionEnvironment after mocking RezManager
                             from src.production_environment import ProductionEnvironment
 
+                            # Create instance with verbose=True
+                            prod_env = ProductionEnvironment("test_prod", verbose=True)
+
+                            # Verify the instance was created successfully
+                            assert prod_env.prod_name == "test_prod"
 
                             # Verify that RezManager was created with verbose=True
                             mock_rez_manager.assert_called_once_with(verbose=True)

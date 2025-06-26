@@ -23,7 +23,7 @@ Feature: Configuration management
     And Nuke should have the specified required packages
 
   Scenario: Cross-platform path separators
-    Given a prod-settings.ini file with mixed path separators
+    Given a settings.ini file with mixed path separators
     When I initialize the production environment
     Then the configuration paths should be correctly split
     And the software configuration should be properly loaded
