@@ -79,8 +79,18 @@ class ProcessExecutor():
             RezError: If execution fails
         """
         try:
-            result = subprocess.Popen(command, shell=True)
-            return result.returncode, result.stdout, result.stderr
+            process = subprocess.run(
+                " ".join(command),
+                shell=True,
+                check=True,
+                )
+
+            if process.returncode != 0:
+                raise RezError(
+                    f"Command failed with return code {process.returncode}: "
+                )
+
+            return process.returncode, "" , ""
         except subprocess.SubprocessError as e:
             raise RezError(f"Failed to execute command: {e}")
 
