@@ -64,14 +64,13 @@ class ProcessExecutor():
     """
 
     def execute(
-        self, command: List[str], background: bool = False
+        self, command: List[str],
     ) -> Tuple[int, str, str]:
         """
         Execute a command.
 
         Args:
             command: Command parts to execute
-            background: Whether to run the command in the background
 
         Returns:
             Tuple of (return code, stdout, stderr)
@@ -148,7 +147,6 @@ class RezManager:
         packages: List[str],
         command: str,
         env_only: bool = False,
-        background: bool = False,
     ) -> Tuple[int, str, str]:
         """
         Execute a command within a Rez environment.
@@ -159,7 +157,6 @@ class RezManager:
             packages: Additional packages to include
             command: Command to execute
             env_only: If True, only enter the environment without executing the command
-            background: If True, run the command in the background
 
         Returns:
             Tuple of (return code, stdout, stderr)
@@ -180,7 +177,7 @@ class RezManager:
 
         # Execute the command using the appropriate process executor
         try:
-            return self.process_executor.execute(rez_command, background)
+            return self.process_executor.execute(rez_command)
         except RezError as e:
             self.logger.error(f"Failed to execute command with Rez: {e}")
             raise

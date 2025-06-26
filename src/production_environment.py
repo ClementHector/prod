@@ -428,7 +428,6 @@ class ProductionEnvironment:
         software_alias: str,
         additional_packages: Optional[List[str]] = None,
         env_only: bool = False,
-        background: bool = False,
     ) -> None:
         """
         Executes a software application.
@@ -437,7 +436,6 @@ class ProductionEnvironment:
             software_alias: Alias of the software (section name in config)
             additional_packages: Additional packages to include, overriding base packages
             env_only: If True, only enter the environment without executing the software
-            background: If True, run the software in the background
 
         Raises:
             ConfigError: If software is not configured
@@ -453,7 +451,7 @@ class ProductionEnvironment:
             packages = self._merge_packages(base_pkgs, additional_packages)
 
             return_code, _, stderr = self.rez_manager.execute_with_rez(
-                software_name, version, packages, software_name, env_only, background
+                software_name, version, packages, software_name, env_only
             )
 
         except ConfigError as e:

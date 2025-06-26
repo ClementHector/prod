@@ -79,7 +79,7 @@ class LAUNCHCLI:
             additional_packages = parsed_args.packages if hasattr(parsed_args, "packages") else None
             env_only = parsed_args.env_only if hasattr(parsed_args, "env_only") else False
             env.execute_software(
-                parsed_args.software, additional_packages, env_only, background=False
+                parsed_args.software, additional_packages, env_only,
             )
             return 0
         except Exception as e:
