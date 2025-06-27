@@ -5,7 +5,7 @@ Feature: Command line interface
 
   Scenario: Listing available productions
     Given several productions exist
-    When I run the command "prod list"
+    When I run the command "prod --list"
     Then I should see a list of all available productions
 
   Scenario: Entering a production environment
@@ -19,14 +19,14 @@ Feature: Command line interface
     Given I am in the "dlt" production environment
     When I run the command "maya"
     Then Maya should be launched with the correct settings
-    
+
   Scenario: Launching software with additional packages
     Given I am in the "dlt" production environment
     When I run the command "maya --packages dev-package"
     Then Maya should be launched with the additional package "dev-package"
-    
+
   Scenario: Entering a Rez environment without launching software
     Given I am in the "dlt" production environment
     When I run the command "maya --env-only"
     Then I should be in a Rez environment for Maya
-    And the software should not be launched 
+    And the software should not be launched

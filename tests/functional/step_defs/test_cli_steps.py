@@ -155,44 +155,39 @@ def run_command(cli_context, command):
             cli_context["stderr"] = mock_stderr.getvalue()
 
     elif cmd in ["maya", "nuke", "houdini"]:
-        # Exécuter une commande de logiciel
+        # For software commands, we need to use LAUNCHCLI and --prod argument
+        from src.cli import LAUNCHCLI
+
         with (
             mock.patch("sys.stdout", new=StringIO()) as mock_stdout,
             mock.patch("sys.stderr", new=StringIO()) as mock_stderr,
         ):
-            # Extraire les arguments supplémentaires
+            # Build arguments for LAUNCHCLI
             additional_args = []
+
+            # Add production name from context
+            if "prod_name" in cli_context:
+                additional_args.extend(["--prod", cli_context["prod_name"]])
+
+            # Handle --packages argument
             if "--packages" in args:
                 idx = args.index("--packages")
                 if idx + 1 < len(args):
-                    additional_args = ["--packages", args[idx + 1]]
-                    # Sauvegarder le package supplémentaire dans le contexte
+                    additional_args.extend(["--packages", args[idx + 1]])
                     cli_context["additional_package"] = args[idx + 1]
 
+            # Handle --env-only argument
             if "--env-only" in args:
                 additional_args.append("--env-only")
-                cli_context["env_only"] = (
-                    True  # Préparer l'environnement et exécuter avec les mocks
-                )
-            with cli_context["mock_environ_get"], cli_context["mock_execute_software"]:
+                cli_context["env_only"] = True
+
+            # Mock ProductionEnvironment for LAUNCHCLI
+            mock_env = mock.MagicMock()
+            with mock.patch("src.cli.ProductionEnvironment", return_value=mock_env):
                 # Exécuter la commande
                 with mock.patch("sys.argv", [cmd] + additional_args):
-                    # Appel direct pour s'assurer que notre mock est utilisé
-                    cli = PRODUCTIONCLI()
+                    cli = LAUNCHCLI()
                     cli_context["return_code"] = cli.run([cmd] + additional_args)
-
-                    # Make sure the mock is called manually if necessary
-                    if not cli_context["mock_execute_instance"].called:
-                        env_only = "--env-only" in additional_args
-                        additional_packages = []
-                        if "--packages" in additional_args:
-                            idx = additional_args.index("--packages")
-                            if idx + 1 < len(additional_args):
-                                additional_packages = [additional_args[idx + 1]]
-                        # Call the mock directly to simulate execution
-                        cli_context["mock_execute_instance"](
-                            cmd, additional_packages, env_only=env_only
-                        )
 
             # Capturer la sortie
             cli_context["stdout"] = mock_stdout.getvalue()

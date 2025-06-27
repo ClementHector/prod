@@ -70,7 +70,7 @@ class LAUNCHCLI:
         Returns:
             Exit code - 0 for success, 1 for error
         """
-        parsed_args = self.parser.parse_args()
+        parsed_args = self.parser.parse_args(args)
         self.logger = Logger(parsed_args.verbose)
 
         try:
@@ -139,7 +139,7 @@ class PRODUCTIONCLI:
         Returns:
             Exit code - 0 for success, 1 for error
         """
-        parsed_args = self.parser.parse_args()
+        parsed_args = self.parser.parse_args(args)
         self.logger = Logger(parsed_args.verbose)
 
         if parsed_args.list:

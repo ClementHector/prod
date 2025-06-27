@@ -182,7 +182,7 @@ maya --packages golaem-6.3
 3. Use the `prod` command to enter a production environment:
    ```bash
    # List available productions
-   prod list
+   prod --list
 
    # Enter a production
    prod your_production

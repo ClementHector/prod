@@ -29,14 +29,23 @@ PIPELINE_CONFIG=/path/to/studio/pipeline.inisep/path/to/prod/{PROD_NAME}/config/
             return_value=Path("mock_settings_path"),
         ):
             with patch("pathlib.Path.exists", return_value=True):
-                prod_env = ProductionEnvironment("test_prod")
+                # Mock the software config parsing to avoid ConfigError
+                with patch(
+                    "src.production_environment.ProductionEnvironment._parse_software_config",
+                    return_value=None
+                ):
+                    with patch(
+                        "src.production_environment.ProductionEnvironment._parse_pipeline_config",
+                        return_value=None
+                    ):
+                        prod_env = ProductionEnvironment("test_prod")
 
-                # Access the private method directly for testing
-                config_paths = prod_env.config_paths
+                        # Access the private method directly for testing
+                        config_paths = prod_env.config_paths
 
-                # Check that the paths were correctly split
-                assert len(config_paths["software"]) == 2
-                assert config_paths["software"][0] == "/path/to/studio/software.ini"
+                        # Check that the paths were correctly split
+                        assert len(config_paths["software"]) == 2
+                        assert config_paths["software"][0] == "/path/to/studio/software.ini"
 
                 assert config_paths["software"][1] == "/path/to/prod/test_prod/config/software.ini"
                 assert len(config_paths["pipeline"]) == 2
@@ -61,19 +70,28 @@ PIPELINE_CONFIG=C:\\path\\to\\studio\\pipeline.ini;C:\\path\\to\\prod\\{PROD_NAM
             return_value=Path("mock_settings_path"),
         ):
             with patch("pathlib.Path.exists", return_value=True):
-                prod_env = ProductionEnvironment("test_prod")
+                # Mock the software config parsing to avoid ConfigError
+                with patch(
+                    "src.production_environment.ProductionEnvironment._parse_software_config",
+                    return_value=None
+                ):
+                    with patch(
+                        "src.production_environment.ProductionEnvironment._parse_pipeline_config",
+                        return_value=None
+                    ):
+                        prod_env = ProductionEnvironment("test_prod")
 
-                # Access the private method directly for testing
-                config_paths = prod_env.config_paths
+                        # Access the private method directly for testing
+                        config_paths = prod_env.config_paths
 
-                # Check that the paths were correctly split
-                assert len(config_paths["software"]) == 2
-                assert config_paths["software"][0] == "C:\\path\\to\\studio\\software.ini"
-                assert config_paths["software"][1] == "C:\\path\\to\\prod\\test_prod\\config\\software.ini"
+                        # Check that the paths were correctly split
+                        assert len(config_paths["software"]) == 2
+                        assert config_paths["software"][0] == "C:\\path\\to\\studio\\software.ini"
+                        assert config_paths["software"][1] == "C:\\path\\to\\prod\\test_prod\\config\\software.ini"
 
-                assert len(config_paths["pipeline"]) == 2
-                assert config_paths["pipeline"][0] == "C:\\path\\to\\studio\\pipeline.ini"
-                assert config_paths["pipeline"][1] == "C:\\path\\to\\prod\\test_prod\\config\\pipeline.ini"
+                        assert len(config_paths["pipeline"]) == 2
+                        assert config_paths["pipeline"][0] == "C:\\path\\to\\studio\\pipeline.ini"
+                        assert config_paths["pipeline"][1] == "C:\\path\\to\\prod\\test_prod\\config\\pipeline.ini"
 
 
 def test_load_config_paths_no_separator():
@@ -93,14 +111,23 @@ PIPELINE_CONFIG=C:\\path\\to\\pipeline.ini
             return_value=Path("mock_settings_path"),
         ):
             with patch("pathlib.Path.exists", return_value=True):
-                prod_env = ProductionEnvironment("test_prod")
+                # Mock the software config parsing to avoid ConfigError
+                with patch(
+                    "src.production_environment.ProductionEnvironment._parse_software_config",
+                    return_value=None
+                ):
+                    with patch(
+                        "src.production_environment.ProductionEnvironment._parse_pipeline_config",
+                        return_value=None
+                    ):
+                        prod_env = ProductionEnvironment("test_prod")
 
-                # Access the private method directly for testing
-                config_paths = prod_env.config_paths
+                        # Access the private method directly for testing
+                        config_paths = prod_env.config_paths
 
-                # Check that the single path was handled correctly
-                assert len(config_paths["software"]) == 1
-                assert config_paths["software"][0] == "C:\\path\\to\\software.ini"
+                        # Check that the single path was handled correctly
+                        assert len(config_paths["software"]) == 1
+                        assert config_paths["software"][0] == "C:\\path\\to\\software.ini"
 
-                assert len(config_paths["pipeline"]) == 1
-                assert config_paths["pipeline"][0] == "C:\\path\\to\\pipeline.ini"
+                        assert len(config_paths["pipeline"]) == 1
+                        assert config_paths["pipeline"][0] == "C:\\path\\to\\pipeline.ini"

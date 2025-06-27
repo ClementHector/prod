@@ -33,7 +33,20 @@ def mock_environment():
     mock_load_started.return_value = {"software": [], "pipeline": []}
 
     # Crée l'environnement de production avec les mocks
-    prod_env = ProductionEnvironment("test_prod")
+    with patch(
+        "src.production_environment.ProductionEnvironment._parse_software_config",
+        return_value=None
+    ):
+        with patch(
+            "src.production_environment.ProductionEnvironment._parse_pipeline_config",
+            return_value=None
+        ):
+            prod_env = ProductionEnvironment("test_prod")
+
+            # Mock the pipeline_config after instantiation
+            mock_pipeline_config = MagicMock()
+            mock_pipeline_config.get_environment_variables.return_value = {}
+            prod_env.pipeline_config = mock_pipeline_config
 
     # Prépare les données de test pour la liste des logiciels
     mock_software_list = [
