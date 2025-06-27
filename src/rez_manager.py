@@ -83,17 +83,16 @@ class ProcessExecutor():
                 " ".join(command),
                 shell=True,
                 check=True,
-                )
+            )
 
             if process.returncode != 0:
                 raise RezError(
                     f"Command failed with return code {process.returncode}: "
                 )
 
-            return process.returncode, "" , ""
+            return process.returncode, "", ""
         except subprocess.SubprocessError as e:
             raise RezError(f"Failed to execute command: {e}")
-
 
 
 class RezManager:

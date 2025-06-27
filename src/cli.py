@@ -192,9 +192,6 @@ def list_prod_names():
     Returns:
         List of production names
     """
-    # if os.getenv("PROD_ROOT"):
-    #     prod_root = Path(os.getenv("PROD_ROOT")).resolve()
-
 
     prods_dir = Path(__file__).parent.joinpath("../config/prods").resolve()
     if not prods_dir.exists():

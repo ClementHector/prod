@@ -39,7 +39,7 @@ def test_cli_run_no_args(cli):
     # Since the new CLI requires a production argument or --list flag
     # we expect it to return 1 (error) when no arguments are provided
     result = cli.run([])
-    
+
     # Check the return code (should be 1 for error)
     assert result == 1
 

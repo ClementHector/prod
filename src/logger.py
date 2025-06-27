@@ -147,4 +147,3 @@ def configure_logger(verbose: bool = False) -> None:
 
     logger = logging.getLogger(LOGGER_NAME)
     logger.setLevel(logging.DEBUG if verbose else logging.INFO)
-
