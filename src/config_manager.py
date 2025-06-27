@@ -25,7 +25,9 @@ class ConfigManager:
     def __init__(self) -> None:
         """Initialize the configuration manager with empty configuration."""
         self.config_parser = configparser.ConfigParser()
+        self.config_parser.optionxform = str  # Preserve case sensitivity
         self.override_config = configparser.ConfigParser()
+        self.override_config.optionxform = str
         self.logger = get_logger()
 
     def load_config(self, config_path: Union[str, Path]) -> None:
@@ -157,3 +159,4 @@ class ConfigManager:
     def clear_overrides(self) -> None:
         """Clear all override configurations."""
         self.override_config = configparser.ConfigParser()
+        self.override_config.optionxform = str
