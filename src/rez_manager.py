@@ -5,10 +5,8 @@ This module provides integration with the Rez package manager, allowing
 for the execution of commands within Rez environments.
 """
 
-import os
 import platform
 import subprocess
-from abc import ABC, abstractmethod
 from typing import List, Optional, Tuple
 
 from src.exceptions import RezError
@@ -58,13 +56,14 @@ class RezCommandBuilder:
         return rez_command
 
 
-class ProcessExecutor():
+class ProcessExecutor:
     """
     Abstract base class for executing processes in different environments.
     """
 
     def execute(
-        self, command: List[str],
+        self,
+        command: List[str],
     ) -> Tuple[int, str, str]:
         """
         Execute a command.

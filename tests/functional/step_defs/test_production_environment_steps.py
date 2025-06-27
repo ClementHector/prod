@@ -95,7 +95,7 @@ packages = ["vfxHoudiniTools-1.5"]
 STUDIO_ROOT=/s/studio
 TOOLS_ROOT=/s/studio/tools
 """
-        )    # Create the production configuration files
+        )
     with open(os.path.join(prod_dir, "software.ini"), "w") as f:
         f.write(
             """

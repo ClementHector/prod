@@ -3,7 +3,6 @@ Command line interface for the Prod CLI tool.
 """
 
 import argparse
-import os
 from pathlib import Path
 from typing import List, Optional
 

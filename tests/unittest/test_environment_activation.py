@@ -35,11 +35,11 @@ def mock_environment():
     # Crée l'environnement de production avec les mocks
     with patch(
         "src.production_environment.ProductionEnvironment._parse_software_config",
-        return_value=None
+        return_value=None,
     ):
         with patch(
             "src.production_environment.ProductionEnvironment._parse_pipeline_config",
-            return_value=None
+            return_value=None,
         ):
             prod_env = ProductionEnvironment("test_prod")
 
