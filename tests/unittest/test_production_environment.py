@@ -2,7 +2,6 @@
 Unit tests for the ProductionEnvironment class.
 """
 
-import os
 from pathlib import Path
 from unittest.mock import mock_open, patch
 
@@ -11,23 +10,16 @@ from src.production_environment import ProductionEnvironment
 
 @patch("pathlib.Path.exists", return_value=True)
 @patch("src.production_environment.ProductionEnvironment._get_settings_path", return_value=Path("mock_settings_path"))
-@patch("builtins.open")
+@patch("builtins.open", new_callable=lambda: mock_open(read_data="""
+[environment]
+SOFTWARE_CONFIG=/path/to/studio/software.ini:/path/to/prod/{PROD_NAME}/config/software.ini
+PIPELINE_CONFIG=/path/to/studio/pipeline.ini:/path/to/prod/{PROD_NAME}/config/pipeline.ini
+"""))
+@patch("os.pathsep", ":")
 def test_load_config_paths_unix_separator(mock_file, mock_get_settings_path, mock_path_exists):
     """
     Test loading config paths with Unix separator.
     """
-    # Mock file content with Unix separator
-    mock_config_content = """
-[environment]
-SOFTWARE_CONFIG=/path/to/studio/software.inisep/path/to/prod/{PROD_NAME}/config/software.ini
-PIPELINE_CONFIG=/path/to/studio/pipeline.inisep/path/to/prod/{PROD_NAME}/config/pipeline.ini
-"""
-    mock_config_content = mock_config_content.replace("sep", os.pathsep)
-    print(mock_config_content)
-
-    # Configure mock_open with the generated content
-    mock_file.side_effect = mock_open(read_data=mock_config_content)
-
     prod_env = ProductionEnvironment("test_prod")
 
     # Access the private method directly for testing
@@ -50,6 +42,7 @@ PIPELINE_CONFIG=/path/to/studio/pipeline.inisep/path/to/prod/{PROD_NAME}/config/
 SOFTWARE_CONFIG=C:\\path\\to\\studio\\software.ini;C:\\path\\to\\prod\\{PROD_NAME}\\config\\software.ini
 PIPELINE_CONFIG=C:\\path\\to\\studio\\pipeline.ini;C:\\path\\to\\prod\\{PROD_NAME}\\config\\pipeline.ini
 """))
+@patch("os.pathsep", ";")
 def test_load_config_paths_windows_separator(mock_file, mock_get_settings_path, mock_path_exists):
     """
     Test loading config paths with Windows separator.
@@ -77,6 +70,7 @@ def test_load_config_paths_windows_separator(mock_file, mock_get_settings_path, 
 SOFTWARE_CONFIG=C:\\path\\to\\software.ini
 PIPELINE_CONFIG=C:\\path\\to\\pipeline.ini
 """))
+@patch("os.pathsep", ";")
 def test_load_config_paths_no_separator(mock_file, mock_get_settings_path, mock_path_exists):
     """
     Test loading config paths with no separator.
