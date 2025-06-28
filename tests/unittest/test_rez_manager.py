@@ -37,33 +37,33 @@ def test_validate_rez_installation_success(rez_manager):
     )
 
 
-def test_validate_rez_installation_failure_subprocess_error():
+@mock.patch("src.rez_manager.get_logger")
+@mock.patch("src.rez_manager.platform.system", return_value="Windows")
+@mock.patch("src.rez_manager.subprocess.run")
+def test_validate_rez_installation_failure_subprocess_error(mock_run, mock_system, mock_logger):
     """Test validation failure when subprocess fails."""
-    with mock.patch("src.rez_manager.get_logger"):
-        with mock.patch("src.rez_manager.platform.system", return_value="Windows"):
-            with mock.patch("src.rez_manager.subprocess.run") as mock_run:
-                # Instead of raising exception directly, return an error result
-                mock_result = mock.MagicMock()
-                mock_result.returncode = 1
-                mock_result.stderr = "Command failed"
-                mock_run.return_value = mock_result
+    # Instead of raising exception directly, return an error result
+    mock_result = mock.MagicMock()
+    mock_result.returncode = 1
+    mock_result.stderr = "Command failed"
+    mock_run.return_value = mock_result
 
-                with pytest.raises(RezError) as excinfo:
-                    RezManager()
+    with pytest.raises(RezError) as excinfo:
+        RezManager()
 
-                assert "Rez installation check failed" in str(excinfo.value)
+    assert "Rez installation check failed" in str(excinfo.value)
 
 
-def test_validate_rez_installation_failure_file_not_found():
+@mock.patch("src.rez_manager.get_logger")
+@mock.patch("src.rez_manager.platform.system", return_value="Windows")
+@mock.patch("src.rez_manager.subprocess.run")
+def test_validate_rez_installation_failure_file_not_found(mock_run, mock_system, mock_logger):
     """Test validation failure when Rez is not found."""
-    with mock.patch("src.rez_manager.get_logger"):
-        with mock.patch("src.rez_manager.platform.system", return_value="Windows"):
-            with mock.patch("src.rez_manager.subprocess.run") as mock_run:
-                mock_run.side_effect = FileNotFoundError(
-                    "No such file or directory: 'rez'"
-                )
+    mock_run.side_effect = FileNotFoundError(
+        "No such file or directory: 'rez'"
+    )
 
-                with pytest.raises(RezError) as excinfo:
-                    RezManager()
+    with pytest.raises(RezError) as excinfo:
+        RezManager()
 
-                assert "Rez is not installed or not in PATH" in str(excinfo.value)
+    assert "Rez is not installed or not in PATH" in str(excinfo.value)

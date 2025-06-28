@@ -11,15 +11,15 @@ from src.environment_manager import EnvironmentManager
 
 
 @pytest.fixture
-def env_manager():
+@patch("src.environment_manager.get_logger")
+def env_manager(mock_logger):
     """
     Fixture to create an environment manager.
 
     Returns:
         EnvironmentManager
     """
-    with patch("src.environment_manager.get_logger"):
-        return EnvironmentManager()
+    return EnvironmentManager()
 
 
 @pytest.fixture
@@ -57,7 +57,8 @@ def test_set_environment_variables(env_manager, env_vars):
         os.environ.update(original_env)
 
 
-def test_set_path_variables(env_manager):
+@patch.object(EnvironmentManager, "set_path_variables")
+def test_set_path_variables(mock_set_path_variables, env_manager):
     """Test setting path variables."""
     # Save original environment
     original_env = os.environ.copy()
@@ -76,9 +77,9 @@ def test_set_path_variables(env_manager):
         env_manager.current_env["PYTHONPATH"] = "/usr/lib/python"
 
         # Create a simplified version of set_path_variables to avoid the Path.resolve issue
-        def simple_set_path_variables(self, path_variables):
+        def simple_set_path_variables(path_variables):
             for key, paths in path_variables.items():
-                existing_path = self.current_env.get(key, "")
+                existing_path = env_manager.current_env.get(key, "")
                 new_paths = []
                 for path in paths:
                     if path not in existing_path:
@@ -89,42 +90,41 @@ def test_set_path_variables(env_manager):
                 else:
                     new_path = os.pathsep.join(new_paths)
 
-                self._set_environment_variable(key, new_path)
+                env_manager._set_environment_variable(key, new_path)
 
-        # Replace the original method with our simplified version
-        with patch.object(
-            EnvironmentManager, "set_path_variables", simple_set_path_variables
-        ):
-            # Call the method under test
-            env_manager.set_path_variables({"PATH": path_vars["PATH"]})
+        # Configure the mock to use our simplified version
+        mock_set_path_variables.side_effect = simple_set_path_variables
 
-            # Verify the environment variable was updated
-            for path in path_vars["PATH"]:
-                assert path in os.environ["PATH"]
+        # Call the method under test
+        env_manager.set_path_variables({"PATH": path_vars["PATH"]})
 
-            # Test with PYTHONPATH
-            env_manager.set_path_variables({"PYTHONPATH": path_vars["PYTHONPATH"]})
+        # Verify the environment variable was updated
+        for path in path_vars["PATH"]:
+            assert path in os.environ["PATH"]
 
-            # Verify PYTHONPATH was updated
-            for path in path_vars["PYTHONPATH"]:
-                assert path in os.environ["PYTHONPATH"]
+        # Test with PYTHONPATH
+        env_manager.set_path_variables({"PYTHONPATH": path_vars["PYTHONPATH"]})
+
+        # Verify PYTHONPATH was updated
+        for path in path_vars["PYTHONPATH"]:
+            assert path in os.environ["PYTHONPATH"]
     finally:
         # Restore original environment
         os.environ.clear()
         os.environ.update(original_env)
 
 
-def test_format_paths_windows(env_manager):
+@patch("platform.system", return_value="Windows")
+def test_format_paths_windows(mock_platform, env_manager):
     """Test formatting paths on Windows."""
-    with patch("platform.system", return_value="Windows"):
-        paths = ["/path/to/bin", "/another/path"]
-        formatted = env_manager._format_paths(paths)
-        assert formatted == ["\\path\\to\\bin", "\\another\\path"]
+    paths = ["/path/to/bin", "/another/path"]
+    formatted = env_manager._format_paths(paths)
+    assert formatted == ["\\path\\to\\bin", "\\another\\path"]
 
 
-def test_format_paths_unix(env_manager):
+@patch("platform.system", return_value="Linux")
+def test_format_paths_unix(mock_platform, env_manager):
     """Test formatting paths on Unix."""
-    with patch("platform.system", return_value="Linux"):
-        paths = ["/path/to/bin", "/another/path"]
-        formatted = env_manager._format_paths(paths)
-        assert formatted == ["/path/to/bin", "/another/path"]
+    paths = ["/path/to/bin", "/another/path"]
+    formatted = env_manager._format_paths(paths)
+    assert formatted == ["/path/to/bin", "/another/path"]

@@ -2,21 +2,24 @@
 Unit tests for the Logger class.
 """
 
+import pytest
 from unittest import mock
 
 from src.logger import Logger
 
 
-def test_logger_initialization():
-    """Test logger initialization with default settings."""
-    logger = Logger()
-    assert logger.logger.level == 20
-
-    logger = Logger(verbose=False)
-    assert logger.logger.level == 20
-
-    logger = Logger(verbose=True)
-    assert logger.logger.level == 10
+@pytest.mark.parametrize("verbose,expected_level", [
+    (None, 20),  # Default behavior (no verbose parameter)
+    (False, 20),  # Explicit verbose=False
+    (True, 10),   # Explicit verbose=True
+])
+def test_logger_initialization(verbose, expected_level):
+    """Test logger initialization with different verbose settings."""
+    if verbose is None:
+        logger = Logger()  # Default initialization
+    else:
+        logger = Logger(verbose=verbose)
+    assert logger.logger.level == expected_level
 
 
 def test_logger_handlers():
@@ -30,38 +33,34 @@ def test_logger_handlers():
     assert all(not hasattr(h, "baseFilename") for h in logger.logger.handlers)
 
 
-def test_logging_methods():
-    """Test all logging methods."""
+@pytest.mark.parametrize(
+    "method_name,message",
+    [
+        ("debug", "Debug message"),
+        ("info", "Info message"),
+        ("warning", "Warning message"),
+        ("error", "Error message"),
+        ("critical", "Critical message"),
+    ]
+)
+def test_logging_methods(method_name, message):
+    """Test all logging methods with parametrized inputs."""
     logger = Logger()
 
-    with mock.patch.object(logger.logger, "debug") as mock_debug:
-        logger.debug("Debug message")
-        mock_debug.assert_called_once_with("Debug message")
-
-    with mock.patch.object(logger.logger, "info") as mock_info:
-        logger.info("Info message")
-        mock_info.assert_called_once_with("Info message")
-
-    with mock.patch.object(logger.logger, "warning") as mock_warning:
-        logger.warning("Warning message")
-        mock_warning.assert_called_once_with("Warning message")
-
-    with mock.patch.object(logger.logger, "error") as mock_error:
-        logger.error("Error message")
-        mock_error.assert_called_once_with("Error message")
-
-    with mock.patch.object(logger.logger, "critical") as mock_critical:
-        logger.critical("Critical message")
-        mock_critical.assert_called_once_with("Critical message")
+    with mock.patch.object(logger.logger, method_name) as mock_method:
+        getattr(logger, method_name)(message)
+        mock_method.assert_called_once_with(message)
 
 
-def test_set_log_level():
-    """Test setting the log level."""
+@pytest.mark.parametrize("log_level,expected_level", [
+    ("DEBUG", 10),
+    ("INFO", 20),
+    ("WARNING", 30),
+    ("ERROR", 40),
+    ("CRITICAL", 50),
+])
+def test_set_log_level(log_level, expected_level):
+    """Test setting the log level with parametrized inputs."""
     logger = Logger()
-    assert logger.logger.level == 20
-
-    logger.set_log_level("DEBUG")
-    assert logger.logger.level == 10
-
-    logger.set_log_level("ERROR")
-    assert logger.logger.level == 40
+    logger.set_log_level(log_level)
+    assert logger.logger.level == expected_level

@@ -44,61 +44,59 @@ def test_cli_run_no_args(cli):
     assert result == 1
 
 
-def test_cli_run_list_command(cli):
+@patch.object(PRODUCTIONCLI, "_handle_list_command")
+def test_cli_run_list_command(mock_handle_list, cli):
     """
     Test running the CLI with the list command.
     """
-    # Mock the _handle_list_command method
-    with patch.object(cli, "_handle_list_command") as mock_handle_list:
-        mock_handle_list.return_value = 0
+    mock_handle_list.return_value = 0
 
-        # Run the CLI with the --list flag
-        result = cli.run(["--list"])
+    # Run the CLI with the --list flag
+    result = cli.run(["--list"])
 
-        # Check that the list handler was called
-        mock_handle_list.assert_called_once()
+    # Check that the list handler was called
+    mock_handle_list.assert_called_once()
 
-        # Check the return code
-        assert result == 0
+    # Check the return code
+    assert result == 0
 
 
-def test_cli_run_production_name(cli):
+@patch("src.cli.list_prod_names")
+@patch.object(PRODUCTIONCLI, "_handle_enter_command")
+def test_cli_run_production_name(mock_handle_enter, mock_list_prod_names, cli):
     """
     Test running the CLI with a production name.
     """
-    # Mock the _handle_enter_command method
-    with patch.object(cli, "_handle_enter_command") as mock_handle_enter:
-        mock_handle_enter.return_value = 0
+    mock_handle_enter.return_value = 0
+    mock_list_prod_names.return_value = ["dlt", "tld"]
 
-        # Mock list_prod_names to include 'dlt'
-        with patch("src.cli.list_prod_names", return_value=["dlt", "tld"]):
-            # Run the CLI with a production name
-            result = cli.run(["dlt"])
+    # Run the CLI with a production name
+    result = cli.run(["dlt"])
 
-            # Check that the enter handler was called with the production name and verbose flag
-            mock_handle_enter.assert_called_once_with("dlt", False)
+    # Check that the enter handler was called with the production name and verbose flag
+    mock_handle_enter.assert_called_once_with("dlt", False)
 
-            # Check the return code
-            assert result == 0
+    # Check the return code
+    assert result == 0
 
 
-def test_handle_enter_command_activates_environment(cli):
+@patch("src.cli.ProductionEnvironment")
+def test_handle_enter_command_activates_environment(mock_prod_env, cli):
     """
     Test that _handle_enter_command activates the production environment.
     """
     # Create a mock production environment
     mock_env = MagicMock()
+    mock_prod_env.return_value = mock_env
 
-    # Mock the ProductionEnvironment class
-    with patch("src.cli.ProductionEnvironment", return_value=mock_env) as mock_prod_env:
-        # Call the enter command handler with the new signature
-        result = cli._handle_enter_command("test_prod", False)
+    # Call the enter command handler with the new signature
+    result = cli._handle_enter_command("test_prod", False)
 
-        # Check that ProductionEnvironment was created with the production name and verbose flag
-        mock_prod_env.assert_called_once_with("test_prod", verbose=False)
+    # Check that ProductionEnvironment was created with the production name and verbose flag
+    mock_prod_env.assert_called_once_with("test_prod", verbose=False)
 
-        # Check that activate was called
-        mock_env.activate.assert_called_once()
+    # Check that activate was called
+    mock_env.activate.assert_called_once()
 
-        # Check the return code
-        assert result == 0
+    # Check the return code
+    assert result == 0
